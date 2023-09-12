@@ -5,11 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: 模块",
+            "name": "run-dev",
             "type": "python",
             "request": "launch",
             "module": "qual",
-            "justMyCode": true
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }
