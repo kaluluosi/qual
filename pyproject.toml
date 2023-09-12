@@ -1,9 +1,9 @@
 [tool.poetry]
 name = "qual"
 version = "0.1.0"
-description = ""
+description = "这是一段描述"
 authors = ["kaluluosi111 <kaluluosi@gmail.com>"]
-readme = "README.md"
+readme = "ABOUT.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -15,7 +15,9 @@ pydantic-settings = "^2.0.3"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.287"
+pytest = "^7.4.2"
+pytest-mock = "^3.11.1"
+ruff = "^0.0.289"
 
 [build-system]
 requires = ["poetry-core"]
