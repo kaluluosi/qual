@@ -1,3 +1,4 @@
+import pkg_resources
 from importlib.metadata import distribution
 from typing import Callable
 from fastapi import FastAPI
@@ -5,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import qual
+from qual.core.config import settings
 
 """
 用来注册和统一安装模块
@@ -53,8 +55,11 @@ def init(app: FastAPI):
         app (FastAPI): _description_
     """
 
-    # 挂上静态文件代理
-    app.mount("/static", StaticFiles(directory="qual/static"), name="static")
+    # 挂上静态文件代理，env有配置就优先使用，不然就用包内部的静态目录
+    static_dir = settings.STATIC_PATH or pkg_resources.resource_filename(
+        qual.__package__, "static"
+    )
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
     # 将包元数据写入app
     _setup_app_info(app)
