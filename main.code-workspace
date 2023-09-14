@@ -18,7 +18,8 @@
 			"ms-vscode-remote.remote-containers",
 			"ms-azuretools.vscode-docker",
 			"tamasfe.even-better-toml",
-			"yzhang.markdown-all-in-one"
+			"yzhang.markdown-all-in-one",
+			"gruntfuggly.todo-tree"
 		]
 	}
 }
