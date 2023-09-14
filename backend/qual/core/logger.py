@@ -1,7 +1,10 @@
 import logging
+import coloredlogs
 from .config import settings
 
+
 log_level = logging.DEBUG if settings.DEBUG else logging.INFO
+coloredlogs.install(level=log_level)
 
 logging.basicConfig(level=log_level)
 
