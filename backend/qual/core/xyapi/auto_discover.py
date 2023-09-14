@@ -1,6 +1,7 @@
 """
 自动发现和导入模块工具
 """
+import fnmatch
 import os
 import pkg_resources
 import logging
@@ -10,6 +11,9 @@ from types import ModuleType
 from importlib import import_module
 
 logger = logging.getLogger(__package__)
+
+# 不合法的文件模式，不允许自动发现这些文件
+INVALIDE_PATTERN = ("__init__", "__main__")
 
 
 def get_module_dir(module: ModuleType | str):
@@ -37,7 +41,8 @@ def get_module_dir(module: ModuleType | str):
 
 
 def discover(module: ModuleType | str, pattern: str = "*"):
-    """扫描发现 `module` 下匹配 `pattern` 的模块文件，返回模块路径。
+    """
+        扫描发现 `module` 下匹配 `pattern` 的模块文件，返回模块路径。
 
         由于这个函数是用来发现python文件模块的，因此默认匹配 `.py` 文件。
         `pattern` 参数只需要填写文件名的通配符规则即可。
@@ -64,9 +69,12 @@ def discover(module: ModuleType | str, pattern: str = "*"):
 
             pattern (str): 通配符匹配规则，如 `model*`
 
+            include_root (bool): 是否包括根包目录下的文件. Defaults to False.
+
         Yields:
             _type_: _description_
     """
+
     if isinstance(module, ModuleType):
         if not module.__package__:
             raise ModuleNotFoundError(f"模块 {module} 不合法，其 `__package__` 属性为空")
@@ -95,9 +103,10 @@ def discover(module: ModuleType | str, pattern: str = "*"):
 
 def auto_discover(module: ModuleType | str, pattern: str = "*"):
     """自动发现并导入模块。
-    这个函数跟 `discover` 不同的是， `discover` 只发现和返回所有模块路径，这个函数则对所p>
+    这个函数跟 `discover` 不同的是， `discover` 只发现和返回所有模块路径，这个函数则对所
     有模块执行 `import_module`。
 
+    `pattern` 参数不允许设置为 `__init__` `__main__`。
 
     Args:
         module (ModuleType | str): 模块或者模块路径
@@ -108,19 +117,15 @@ def auto_discover(module: ModuleType | str, pattern: str = "*"):
         dict[str,ModuleType]: 导入后的模块字典
     """
 
+    if fnmatch.fnmatch("__init__", pattern) or fnmatch.fnmatch("__main__", pattern):
+        raise ValueError(f"不允许自动发现 {pattern}，这个模式会匹配到 {INVALIDE_PATTERN}")
+
     module_paths = discover(module, pattern)
 
     modules: dict[str, ModuleType] = {}
     for module_path in module_paths:
         module = import_module(module_path)
-        logger.debug(f"Auto discover module: {module_path}")
+        logger.debug(f"自动发现模块: {module_path}")
         modules[module_path] = module
 
     return modules
-
-
-def test():
-    from importlib.metadata import packages_distributions
-
-    dist = packages_distributions()
-    print(dist)
