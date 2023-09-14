@@ -1,16 +1,9 @@
-import pkg_resources
+from types import ModuleType
 from importlib.metadata import distribution
 from typing import Callable
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-import qual
-from qual.core.config import settings
-
-"""
-用来注册和统一安装模块
-"""
 
 InstallFunction = Callable[[FastAPI], None]
 
@@ -36,12 +29,15 @@ class _PackageMetadata(BaseModel):
         return cls.model_validate(dist.metadata.json)
 
 
-def _setup_app_info(app: FastAPI):
-    """用包元数据来设置app信息
+def _setup_app_info(app: FastAPI, package: ModuleType):
+    """用轮子包元数据来设置app信息
     Args:
         app (FastAPI): _description_
     """
-    metadata = _PackageMetadata.get(qual.__package__)
+    if not package.__package__:
+        return
+
+    metadata = _PackageMetadata.get(package.__package__)
     app.title = metadata.name
     app.summary = metadata.summary
     app.description = metadata.description
@@ -49,26 +45,23 @@ def _setup_app_info(app: FastAPI):
     app.contact = {"name": metadata.author, "email": metadata.author_email}
 
 
-def init(app: FastAPI):
+def init(app: FastAPI, package: ModuleType | None):
     """初始化app
     Args:
         app (FastAPI): _description_
     """
 
-    # 挂上静态文件代理，env有配置就优先使用，不然就用包内部的静态目录
-    static_dir = settings.STATIC_PATH or pkg_resources.resource_filename(
-        qual.__package__, "static"
-    )
-    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
-
     # 将包元数据写入app
-    _setup_app_info(app)
+    if package:
+        _setup_app_info(app, package)
 
     for installer in _modules:
         installer(app)
 
     # 更新依赖注入
     app.dependency_overrides.update(_depends)
+
+    return app
 
 
 def register(func: InstallFunction):

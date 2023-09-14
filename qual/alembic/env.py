@@ -4,6 +4,8 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+
+# 导入项目的配置文件
 from qual.core.config import settings
 
 # this is the Alembic Config object, which provides
@@ -23,7 +25,10 @@ config.set_section_option(section, "sqlalchemy.url", settings.DB_DSN)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from qual.core.database import Base  # noqa
+from qual.core.database import Base, auto_discover_models  # noqa
+import qual  # noqa
+
+auto_discover_models(qual)
 
 target_metadata = Base.metadata
 

@@ -2,7 +2,7 @@ from typing import Any
 import pytest
 from unittest.mock import MagicMock
 from pytest_mock import MockerFixture
-from qual.core.xyapi import _PackageMetadata, _setup_app_info
+from qual.core.xyapi.xyapp import _PackageMetadata, _setup_app_info
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def test_setup_fastapi_info_from_packagemetadata(
 ):
     mock_app = mocker.patch("fastapi.FastAPI")
     metadata = mock_distribution.return_value.metadata.json
-    _setup_app_info(mock_app)
+    _setup_app_info(mock_app, pytest)
 
     assert mock_app.title == metadata["name"]
     assert mock_app.summary == metadata["summary"]
