@@ -40,7 +40,6 @@ def _setup_app_info(app: FastAPI, module: ModuleType):
     if not module.__package__:
         raise ModuleNotFoundError(f"模块 {module} 不属于任何包")
 
-    # FIXME: 这里是有可能会出错误的，因为 `module` 可能并不是轮子，没有分发元数据
     metadata = _PackageMetadata.get(module.__package__)
     app.title = metadata.name
     app.summary = metadata.summary
