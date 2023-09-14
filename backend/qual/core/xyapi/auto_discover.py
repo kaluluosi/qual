@@ -125,7 +125,7 @@ def auto_discover(module: ModuleType | str, pattern: str = "*"):
     modules: dict[str, ModuleType] = {}
     for module_path in module_paths:
         module = import_module(module_path)
-        logger.debug(f"自动发现模块: {module_path}")
+        logger.info(f"自动发现: {module_path}")
         modules[module_path] = module
 
     return modules

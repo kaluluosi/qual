@@ -61,7 +61,7 @@ def init(app: FastAPI, package: ModuleType):
     # 自动发现app模块
     # 将模块的install函数放在 `__app__` 并用 `register` 装饰
     # NOTE: 这是个约定
-    logger.debug("=" * 10 + " 开始自动发现app模块 " + "=" * 10)
+    logger.debug("=" * 10 + " 开始自动发现当前项目app模块 " + "=" * 10)
     auto_discover(package, "__app__")
 
     # 遍历所有安装函数安装app
