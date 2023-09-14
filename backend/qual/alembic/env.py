@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 # 导入项目的配置文件
-from qual.core.config import settings
+from qual.core.settings import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

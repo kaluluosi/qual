@@ -1,6 +1,6 @@
 import logging
 import coloredlogs
-from .config import settings
+from .settings import settings
 
 
 log_level = logging.DEBUG if settings.DEBUG else logging.INFO

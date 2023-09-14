@@ -1,4 +1,4 @@
-from qual.core.config import settings
+from qual.core.settings import settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 

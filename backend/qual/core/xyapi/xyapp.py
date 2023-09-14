@@ -49,7 +49,12 @@ def _setup_app_info(app: FastAPI, module: ModuleType):
 
 
 def init(app: FastAPI, package: ModuleType):
-    """初始化app
+    """
+    初始化app
+
+    FastApi的构造参数里有很多可以设置的功能，xyapi就负责注入app对象就好，不要控制
+    整个FastApi的创建。
+
     Args:
         app (FastAPI): _description_
     """
