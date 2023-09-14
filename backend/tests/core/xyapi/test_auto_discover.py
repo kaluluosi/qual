@@ -74,10 +74,10 @@ def test_auto_discover_with_exist():
     测试模块自动发现导入: 存在匹配的模块
     """
 
-    modules = auto_discover(qual, "__main__")
+    modules = auto_discover(qual.core, "config")
 
     assert len(modules) == 1
-    assert "qual.__main__" in modules
+    assert "qual.core.config" in modules
 
 
 def test_auto_discover_with_not_match():
