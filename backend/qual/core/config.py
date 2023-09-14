@@ -1,5 +1,4 @@
 import enum
-from pydantic import Field, DirectoryPath
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,8 +18,6 @@ class Settings(BaseSettings):
     PORT: int = 8000
 
     DB_DSN: str = "sqlite:///.db.sqlite"
-
-    STATIC_PATH: DirectoryPath | None = Field(default=None)
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
