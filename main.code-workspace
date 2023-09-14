@@ -12,5 +12,13 @@
 			"editor.defaultFormatter": "ms-python.black-formatter"
 		},
 		"python.formatting.provider": "none"
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-vscode-remote.remote-containers",
+			"ms-azuretools.vscode-docker",
+			"tamasfe.even-better-toml",
+			"yzhang.markdown-all-in-one"
+		]
 	}
 }

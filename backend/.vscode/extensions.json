@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "ms-python.black-formatter",
+        "njpwerner.autodocstring",
+        "ms-python.vscode-pylance",
+        "donjayamanne.python-environment-manager",
+        "charliermarsh.ruff"
+    ]
+}
