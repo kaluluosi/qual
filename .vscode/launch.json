@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "module": "qual",
-            "justMyCode": true,
+            "justMyCode": false,
             "envFile": "${workspaceFolder}/.env"
         }
     ]
