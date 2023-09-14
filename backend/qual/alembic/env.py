@@ -25,10 +25,12 @@ config.set_section_option(section, "sqlalchemy.url", settings.DB_DSN)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from qual.core.database import Base, auto_discover_models  # noqa
+from qual.core.database import Base  # noqa
+from qual.core.xyapi import auto_discover  # noqa
 import qual  # noqa
 
-auto_discover_models(qual)
+# 自动发现导入项目中 `model` 开头的模块
+auto_discover(qual, "model*")
 
 target_metadata = Base.metadata
 
