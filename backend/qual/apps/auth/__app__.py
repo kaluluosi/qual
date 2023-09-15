@@ -1,6 +1,7 @@
-from qual.core.xyapi import register
+from qual.core.xyapi import installer, FastAPI
+from .router import api
 
 
-@register(__name__)
-def install(app):
-    ...
+@installer(__name__)
+def install(app: FastAPI):
+    app.include_router(api)

@@ -81,7 +81,7 @@ def init(app: FastAPI, package: ModuleType):
     return app
 
 
-def register(name: str):
+def installer(name: str):
     """注册模块安装函数
     Args:
         func (InstallFunction): 安装函数

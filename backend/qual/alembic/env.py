@@ -30,7 +30,7 @@ from qual.core.xyapi import auto_discover  # noqa
 import qual  # noqa
 
 # 自动发现导入项目中 `model` 开头的模块
-auto_discover(qual, "models*")
+auto_discover(qual, "model")
 
 target_metadata = Base.metadata
 

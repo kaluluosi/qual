@@ -5,7 +5,7 @@ xyapi这个模块是负责提供以下功能:
 
 """
 
-from .xyapp import init, register
+from .xyapp import init, installer, FastAPI
 from .auto_discover import auto_discover
 
-__all__ = ["init", "register", "auto_discover"]
+__all__ = ["init", "installer", "auto_discover", "FastAPI"]
