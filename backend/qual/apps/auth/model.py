@@ -16,7 +16,7 @@ class User(Base, TimeStampMixin):
     name: Mapped[str] = mapped_column(index=True, comment="姓名")
     password: Mapped[bytes] = mapped_column(comment="二进制哈希密码")  # 直接二进制保存了
     email: Mapped[str] = mapped_column(unique=True, nullable=False, comment="邮箱")
-    mobile: Mapped[str] = mapped_column(comment="手机号码")
+    mobile: Mapped[str] = mapped_column(nullable=True,comment="手机号码")
     last_login_at: Mapped[datetime] = mapped_column(nullable=True, comment="最后登录时间")
     avatar: Mapped[str] = mapped_column(comment="头像")
     status: Mapped[Status] = mapped_column(default=Status.active, comment="状态")
