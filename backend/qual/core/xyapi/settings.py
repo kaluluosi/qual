@@ -15,7 +15,7 @@ class BaseSettings(Base):
 
     比如我们有个 `auth` APP模块，这个模块定义了用户和登录认证相关的功能。
     如果它有一些数据需要公开让 `.env` 来配置，按照以往他需要到项目的 `settings.py`
-    下去给 `Settings` 类添加新的字段。这样 `autho` 就跟 `settings.py` 是完全依赖了。
+    下去给 `Settings` 类添加新的字段。这样 `auth` 就跟 `settings.py` 是完全依赖了。
     以后也没办法把 `auth` 模块封装成一个独立的 `package` 做成公用模块。
 
     现在通过直接继承这个 `Settings`，定义你想要公开的字段，在任何模块实例化

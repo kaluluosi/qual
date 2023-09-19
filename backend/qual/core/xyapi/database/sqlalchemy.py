@@ -21,12 +21,30 @@ def init_engine(engine: Engine | AsyncEngine):
         logger.debug(f"初始化异步引擎 {engine}")
 
 
-def _session():
+def create_session():
+    """
+    创建会话
+    """
     engine = _engine_var.get()
     if engine is None:
         raise RuntimeError("没有初始化引擎，请用 `create_engine` 创建一个引擎，然后调用 `init_engine`。")
+    return Session(engine)
 
-    with Session(engine) as session:
+
+def create_async_session():
+    """
+    创建异步会话
+    """
+    engine = _async_engine_var.get()
+    if engine is None:
+        raise RuntimeError(
+            "没有初始化异步引擎，请用 `create_async_engine` 创建一个引擎，然后调用 `init_engine`。"
+        )
+    return AsyncSession(_async_engine_var.get())
+
+
+def _session():
+    with create_session() as session:
         with session.begin():
             logger.debug(f"开始 session {session}")
             yield session
@@ -37,13 +55,7 @@ SessionADP = Annotated[Session, Depends(_session, use_cache=True)]
 
 
 async def _async_session():
-    engine = _async_engine_var.get()
-    if engine is None:
-        raise RuntimeError(
-            "没有初始化异步引擎，请用 `create_async_engine` 创建一个引擎，然后调用 `init_engine`。"
-        )
-
-    async with AsyncSession(engine) as session:
+    async with create_async_session() as session:
         async with session.begin():
             logger.debug(f"开始 async session {session}")
             yield session

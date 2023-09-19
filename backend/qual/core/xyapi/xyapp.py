@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 InstallFunction = Callable[[FastAPI], None]
 
 _modules = dict[str, InstallFunction]()
+_initializers = dict[str, Callable]()
 _depends: dict[Callable, Callable] = {}
 
 
@@ -90,6 +91,26 @@ def installer(name: str):
     def _wrapper(func: InstallFunction):
         logger.debug(f"注册app安装器：{name}.{func.__qualname__} ")
         _modules[name] = func
+
+    return _wrapper
+
+
+def initializer(name: str):
+    """
+    注册模块初始化，这个函数是用在CLI初始化项目用的。
+    一般用于数据库添加初始数据。
+
+    @initializer(__name__)
+    def initialize():
+        with Session() as session:
+            with session.begin():
+                user = User(**...)
+
+    """
+
+    def _wrapper(func: Callable):
+        logger.debug(f"初始化模块:{name}.{func.__qualname__}")
+        _initializers[name] = func
 
     return _wrapper
 

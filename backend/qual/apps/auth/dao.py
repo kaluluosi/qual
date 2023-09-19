@@ -1,9 +1,10 @@
+import bcrypt
 from fastapi import Depends
 from sqlalchemy import select
 from qual.core.xyapi.database.sqlalchemy import SessionADP
 from typing import Annotated
 from .model import User
-from .schema import UserIn
+from .schema import UserCreate
 
 
 class DAO:
@@ -26,11 +27,6 @@ class DAO:
         user = self.session.scalar(stmt)
         return user
 
-    def get_by_uid(self, uid: str):
-        stmt = select(User).where(User.uid == uid)
-        user = self.session.scalar(stmt)
-        return user
-
     def get(self, offset: int | None = None, limit: int | None = None):
         """
         获取所有用户。
@@ -45,17 +41,14 @@ class DAO:
         stmt = select(User).offset(offset).limit(limit)
         return self.session.scalars(stmt)
 
-    def create(self, user_in: UserIn):
-        user = User(**user_in.model_dump())
-        self.update(user)
+    def create(self, user_c: UserCreate):
+        user_c.password = bcrypt.hashpw(
+            user_c.password.encode("utf-8"), bcrypt.gensalt()
+        ).hex()
+        user = User(**user_c.model_dump())
+        self.session.add(user)
         self.session.flush()
         return user
-
-    def update(self, *user: User):
-        """
-        提交更新修改
-        """
-        self.session.add_all(user)
 
 
 UserDAO_ADP = Annotated[DAO, Depends(DAO)]
