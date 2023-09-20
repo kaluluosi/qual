@@ -95,6 +95,8 @@ async def sso_token(
     1. 给OpenAPI的 `oauth2_redirect` 页面去获取 `access_token`
     2. 给前端调用获取 `access_token`（通过提交表单将`code`发送过来）
 
+    由于 `OpenAPI`的严重流程中用的表单提交，因此不得已接口也只能用表单了。
+
     Args:
 
         request (Request): _description_
@@ -129,6 +131,9 @@ async def sso_token(
 
 _description = f"""
 前端单点登录看`/xysso`接口说明
+
+> `OpenAPI`的`Available authorizations`中，下面的 `Scopes` 参数是没有用的。
+因为 `XYSSO` 的认证接口重定向的时候没有回传 `scopes`参数，丢失了。但是，我们自己编写前端流程可以将`scopes`表单发送的`/xysso/token` 接口。
 
 当前后端配置:
 

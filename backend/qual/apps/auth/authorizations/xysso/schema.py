@@ -9,7 +9,10 @@ class OAuth2AuthorizationCodeForm:
 
     这个表单是为了兼容 `openapi` 的授权码流程定义的。
 
-    `openapi` 的授权码流程是用表单提交的数据，而不是用 json，不得已要定义这个类。
+    `openapi` 的授权码流程中会重定向到一个中间页面`oauth2_redirect`,然后在这个页面中将授权码相关数据
+    用表单提交到`openai`页面。
+
+    不是用 json，因此不得已要定义这个类。
     """
 
     def __init__(
