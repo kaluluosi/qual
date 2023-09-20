@@ -216,103 +216,24 @@ def jwt_token_payload(access_token: AccessTokenADP):
 # region ScopeSecurity
 
 
-class ScopeBase(enum.StrEnum):
-    """Scopes配置基类
-    继承这个类，然后在模型内部定义Scope。通过to_scopes_map方法获取Scopes字典。
+class ScopeMeta(type):
+    __scopes__: dict[str, str] = {}
 
-    设计这个类的目的是为了能够像枚举一样定义Scope，并且兼容类型检查。
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        self.__scopes__[__name] = __value
 
-    ```
-    class MyScopes(ScopesBase):
-        user:str = Field(description="用户读写权限")
+    def __getattr__(self, item: str) -> str:
+        return self.__scopes__[item]
 
-    map = MyScopes.scope_map
-    # {"user":"用户读取权限"}
-    ```
-
-    Args:
-        BaseModel (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
-
-    @classmethod
     @property
-    def scopes_map(cls):
-        scopes_map = {}
-        for k, v in cls.__members__.items():
-            scopes_map[k] = v
-        return scopes_map
+    def scopes(cls):
+        return cls.__scopes__
 
 
-# XXX: 用ContextVar的方式来全局注册唯一的Scope枚举类，auth模块中的Bearer认证就可以通过
-# scope_var来获取一个抽象的Scope枚举。具体的Scope枚举可以别的地方定义，然后register_scope_cls
-# 的方式注册进去。
-scopes_var = ContextVar[dict[str, str]]("scopes_var", default={})
+class Scope(metaclass=ScopeMeta):
+    ...
 
 
-def register_scope(cls: type[ScopeBase]):
-    """
-    注册Scope类
-
-    Args:
-        cls (type[ScopeBase]): 需要注册的Scope类
-    """
-    scopes = scopes_var.get()
-    maps = cls.scopes_map
-    scopes.update(maps)
-    scopes_var.set(scopes)
-
-
-def get_scopes() -> dict[str, str]:
-    """
-    获取当前注册的scopes
-
-    Returns:
-        dict[str, str]: scopes 表
-    """
-    scopes = scopes_var.get()
-    return scopes
-
-
-class Scope(ScopeBase):
-    all = "all"
-    refresh_token = "refresh_token"
-
-
-register_scope(Scope)
-
-
-def _check_scope(
-    security_scopes: SecurityScopes,
-    payload: Annotated[Payload, Depends(jwt_token_payload)],
-):
-    if "all" not in payload.scopes:
-        for scope in security_scopes.scopes:
-            if scope not in payload.scopes:
-                raise JWTUnauthorizedError(
-                    detail="Token访问域权限不足", scopes=security_scopes
-                )
-
-
-def CheckScope(*scopes: ScopeBase):
-    """wrap Security，scopes参数改成用Scope枚举。
-
-    Args:
-        scopes (Sequence[Scope] | None, optional): _description_. Defaults to None.
-
-    Returns:
-        _type_: _description_
-    """
-
-    array = []
-    if scopes:
-        array = [scope.name for scope in scopes]
-
-    return Security(_check_scope, scopes=array)
-
-
-RefreshTokenScope = CheckScope(Scope.refresh_token)
+Scope.refresh_token = "刷新令牌"
 
 # endregion

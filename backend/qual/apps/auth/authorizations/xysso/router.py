@@ -4,11 +4,7 @@ from fastapi.security import OAuth2AuthorizationCodeBearer
 import httpx
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from qual.core.xyapi.security import (
-    TokenData,
-    Payload,
-    get_scopes,
-)
+from qual.core.xyapi.security import TokenData, Payload, Scope
 from .settings import Settings as AuthSettings
 from .schema import XYTokenResponse, OAuth2AuthorizationCodeForm
 from qual.core.xyapi.security import AccessTokenADP
@@ -148,7 +144,7 @@ xysso_bearer = OAuth2AuthorizationCodeBearer(
     # refreshUrl=api.url_path_for("sso_refresh_token"), # OpenAPI的token刷新完全是废的，所以设置了
     scheme_name="XYSSO-心源单点登录",
     description=_description,
-    scopes=get_scopes(),
+    scopes=Scope.scopes,
     # auto_error=True,  # 认证无效的时候自动抛出 HttpException
 )
 
