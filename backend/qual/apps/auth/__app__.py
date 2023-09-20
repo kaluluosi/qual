@@ -1,16 +1,9 @@
-from qual.core.xyapi import installer, FastAPI
-from .router import api
-from starlette.middleware.sessions import SessionMiddleware
+from fastapi import FastAPI
+from qual.core.xyapi import installer
+from .authorizations.xysso import router as sso
 
 
 @installer(__name__)
 def install(app: FastAPI):
-    # 安装控制器
-    app.include_router(api)
-    app.add_middleware(
-        SessionMiddleware, secret_key="secret", session_cookie="session_id"
-    )
-
-
-def initializer():
-    ...
+    # 安装sso登录接口
+    app.include_router(sso.api)

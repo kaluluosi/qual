@@ -1,4 +1,6 @@
-from pydantic import *  # noqa: F403
+from functools import lru_cache
+from typing import Literal
+from pydantic import Field
 from pydantic_settings import BaseSettings as Base, SettingsConfigDict
 
 
@@ -23,10 +25,16 @@ class BaseSettings(Base):
 
     """
 
-    ENVIRONMENT: str = "dev"
-    DEBUG: bool = True
-    HOST: str = "127.0.0.1"
-    PORT: int = 8000
+    ENVIRONMENT: str | Literal["dev", "prod"] = Field(default="dev", description="环境")
+    DEBUG: bool = Field(default=True, description="调试模式，主要影响日志、FastApi、数据库打印")
+    HOST: str = Field(default="127.0.0.1", description="绑定IP")
+    PORT: int = Field(default=8000, description="端口")
+
+    # JWT令牌相关
+    JWT_SECRET: str = Field(default="jwt_secret", description="密文")
+    JWT_ALGORITHM: str = Field(default="HS256", description="算法")
+    JWT_EXPIRE_MINUTES: int = Field(default=30, description="令牌有效期")
+    JWT_REFRESH_EXPIRE_MINUTES: int = Field(default=43200, description="刷新令牌有效期")
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="allow"
