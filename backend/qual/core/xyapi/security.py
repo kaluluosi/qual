@@ -6,21 +6,18 @@ AccessToken的创建和解析
 """
 
 import enum
-from typing import Annotated, Any, ClassVar, Coroutine, Dict, Optional, Self
-from fastapi import Depends, HTTPException, Header, status, Security
+from typing import Annotated, Any, Self
+from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import (
     HTTPAuthorizationCredentials,
-    OAuth2,
     SecurityScopes,
     HTTPBearer,
 )
-from fastapi.security.utils import get_authorization_scheme_param
 from jose import jwt
 from jose.exceptions import JWTError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
-from starlette.requests import Request
 from contextvars import ContextVar
 from .settings import BaseSettings
 
@@ -100,6 +97,8 @@ class Payload(BaseModel):
         """
         从token字符串中解析出负载
 
+        解析的过程中也会检查过期，如果过期会抛出 ExpiredSignatureError
+
         Args:
             token (str): Bearer <token str> 的 <token str> 部分
 
@@ -169,10 +168,13 @@ class TokenData(BaseModel):
         access_token_pl = payload.model_copy()
         refresh_token_pl = payload.model_copy()
 
-        access_token_pl.scopes = [Scope.all.value]
-        access_token = access_token_pl.to_jwt(expires_min)
+        # XXX: 这里有个问题，我认为应该启用Scope。
+        # refresh_token应该限制只能访问刷新令牌接口，其他接口禁止访问。
 
-        refresh_token_pl.scopes = [Scope.refresh_token.value]
+        # XXX: OpenAPI的Oauth2AuthorizationCodeBeaerer模式无法传递Scope表单，导致了通过
+        # OpenAPI来创建Token是无法
+
+        access_token = access_token_pl.to_jwt(expires_min)
         refresh_token = refresh_token_pl.to_jwt(refresh_expires)
         return cls(
             access_token=access_token,
@@ -181,15 +183,28 @@ class TokenData(BaseModel):
         )
 
 
-httpbearer = HTTPBearer()
+access_token_bearer = HTTPBearer(scheme_name="Access Token", description="JWT访问令牌")
+AccessTokenADP = Annotated[HTTPAuthorizationCredentials, Depends(access_token_bearer)]
 
 
-def jwt_token_payload(auth: HTTPAuthorizationCredentials = Depends(httpbearer)):
-    if not auth or auth.scheme.lower() != "bearer":
-        raise JWTUnauthorizedError("没有认证")
+def jwt_token_payload(access_token: AccessTokenADP):
+    """
+    抽取JWT访问令牌负载的依赖项
+
+    这个依赖项主要用于解析出访问令牌的负载。
+
+    Args:
+        access_token (AccessTokenADP): 访问令牌
+
+    Raises:
+        JWTUnauthorizedError: 未认证异常
+
+    Returns:
+        Payload: 负载
+    """
 
     try:
-        payload = Payload.from_jwt(auth.credentials)
+        payload = Payload.from_jwt(access_token.credentials)
         return payload
     except JWTError as e:
         raise JWTUnauthorizedError(str(e))

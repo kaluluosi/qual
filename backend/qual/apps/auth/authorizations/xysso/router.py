@@ -8,11 +8,10 @@ from qual.core.xyapi.security import (
     TokenData,
     Payload,
     get_scopes,
-    RefreshTokenScope,
-    CheckScope,
 )
 from .settings import Settings as AuthSettings
 from .schema import XYTokenResponse, OAuth2AuthorizationCodeForm
+from qual.core.xyapi.security import AccessTokenADP
 
 api = APIRouter(prefix="/xysso", tags=["xysso"])
 auth_settings = AuthSettings()
@@ -23,11 +22,13 @@ async def req_xyuserinfo(code: str, client_id: str, client_secret: str):
     请求xy用户信息。封装的 `XYSSO_TOKEN_ENDPOINT` 的请求。
 
     Args:
+
         code (_type_): sso返回的授权码
         client_id (_type_): 客户端id
         client_secret (_type_): 客户端密文
 
     Returns:
+
         _type_: _description_
     """
 
@@ -87,20 +88,25 @@ async def sso_token(
     request: Request, form: Annotated[OAuth2AuthorizationCodeForm, Depends()]
 ):
     """
+    这个令牌接口是SSO专用的，因为内部还调用了 `XYSSO_TOKEN_ENPOINT` 接口获取用户信息
+
     这个接口有两个作用：
 
     1. 给OpenAPI的 `oauth2_redirect` 页面去获取 `access_token`
     2. 给前端调用获取 `access_token`（通过提交表单将`code`发送过来）
 
     Args:
+
         request (Request): _description_
         form (Annotated[OAuth2AuthorizationCodeForm, Depends): _description_
 
     Raises:
+
         HTTPException: _description_
 
     Returns:
-        _type_: _description_
+
+        TokenData: {"access_token":"xxx","refresh_token":"xxx"} 结构
     """
 
     if not auth_settings.XYSSO_CLIENT_ID or not auth_settings.XYSSO_CLIENT_SECRET:
@@ -121,12 +127,30 @@ async def sso_token(
     return token
 
 
+_description = f"""
+前端单点登录看`/xysso`接口说明
+
+当前后端配置:
+
+client_id:  {auth_settings.XYSSO_CLIENT_ID}
+
+client_secret:  {auth_settings.XYSSO_CLIENT_SECRET}
+"""
+
 xysso_bearer = OAuth2AuthorizationCodeBearer(
     authorizationUrl=auth_settings.XYSSO_AUTHORIZE_ENDPOINT,
     tokenUrl=api.url_path_for("sso_token"),
     # refreshUrl=api.url_path_for("sso_refresh_token"), # OpenAPI的token刷新完全是废的，所以设置了
     scheme_name="XYSSO-心源单点登录",
-    description="前端单点登录看`/xysso`接口说明",
+    description=_description,
     scopes=get_scopes(),
-    auto_error=True,  # 认证无效的时候自动抛出 HttpException
+    # auto_error=True,  # 认证无效的时候自动抛出 HttpException
 )
+
+
+api.dependencies.append(Depends(xysso_bearer))
+
+
+@api.get("/test_sso_auth", tags=["test"])
+async def test(access_token: AccessTokenADP):
+    return access_token
