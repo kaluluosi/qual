@@ -22,8 +22,8 @@ auth_settings = AuthSettings()
 @api.post("/userinfo", response_model=XYTokenResponse)
 async def req_xyuserinfo(
     code: Annotated[str, Form()],
-    client_id: Annotated[str, Form()],
-    client_secret: Annotated[str, Form()],
+    client_id: Annotated[str | None, Form()] = None,
+    client_secret: Annotated[str | None, Form()] = None,
 ):
     """
     请求xy用户信息。封装的 `XYSSO_TOKEN_ENDPOINT` 的请求。
@@ -31,13 +31,15 @@ async def req_xyuserinfo(
     Args:
 
         code (_type_): sso返回的授权码
-        client_id (_type_): 客户端id
-        client_secret (_type_): 客户端密文
+        client_id (_type_): 客户端id，为空会使用后端配置的id
+        client_secret (_type_): 客户端密文，为空会使用后端配置的secret
 
     Returns:
 
         XYTokenResponse: XYSSO_TOKEN_ENPOINT的响应体
     """
+    client_id = client_id or auth_settings.XYSSO_CLIENT_ID
+    client_secret = client_secret or auth_settings.XYSSO_CLIENT_SECRET
 
     async with httpx.AsyncClient() as http_client:
         response = await http_client.get(
@@ -102,7 +104,9 @@ async def sso_url(redirect_uri: str | None = ""):
 @api.post("/token", response_model=TokenData)
 async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
     """
-    这个令牌接口是直接用授权码获取了Token，因为内部还调用了 `XYSSO_TOKEN_ENPOINT` 接口获取用户信息。
+    这个令牌接口是直接用授权码获取了Token。
+
+    内部还调用了 `XYSSO_TOKEN_ENPOINT` 接口获取用户信息。
 
 
     这个接口有两个作用：
@@ -110,12 +114,12 @@ async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
     1. 给OpenAPI的 `oauth2_redirect` 页面去获取 `access_token`
     2. 给前端调用获取 `access_token`（通过提交表单将`code`发送过来）
 
-    由于 `OpenAPI`的严重流程中用的表单提交，因此不得已接口也只能用表单了。
+    由于 `OpenAPI`的认证流程中用的表单提交，因此不得已接口也只能用表单了。
 
     Args:
 
         request (Request): 请求体
-        form (Annotated[OAuth2AuthorizationCodeForm, Depends): 表单
+        form (Annotated[OAuth2AuthorizationCodeForm, Depends): 表单（client_id和client_secret并没有使用，而是取后端配置的值）
 
     Raises:
 
@@ -133,8 +137,8 @@ async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
         )
 
     code = form.code
-    client_id = form.client_id or auth_settings.XYSSO_CLIENT_ID
-    client_secret = form.client_secret or auth_settings.XYSSO_CLIENT_SECRET
+    client_id = auth_settings.XYSSO_CLIENT_ID
+    client_secret = auth_settings.XYSSO_CLIENT_SECRET
 
     xy_resp = await req_xyuserinfo(code, client_id, client_secret)
 
