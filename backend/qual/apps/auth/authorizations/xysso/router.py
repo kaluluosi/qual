@@ -1,13 +1,16 @@
 import base64
+import httpx
+import logging
 from urllib.parse import urlencode
 from fastapi.security import OAuth2AuthorizationCodeBearer
-import httpx
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from qual.core.xyapi.security import TokenData, Payload, Scope
+from fastapi import APIRouter, Depends, HTTPException, status
+from qual.core.xyapi.security import NeedScope, TokenData, Scope, Payload
 from .settings import Settings as AuthSettings
-from .schema import XYTokenResponse, OAuth2AuthorizationCodeForm
+from .schema import XYTokenResponse, OAuth2AuthorizationCodeForm, XYSSOInfo
 from qual.core.xyapi.security import AccessTokenADP
+
+logger = logging.getLogger(__name__)
 
 api = APIRouter(prefix="/xysso", tags=["xysso"])
 auth_settings = AuthSettings()
@@ -43,8 +46,8 @@ async def req_xyuserinfo(code: str, client_id: str, client_secret: str):
     return xy_resp
 
 
-@api.get("")
-async def get_sso_url(redirect_uri: str):
+@api.options("")
+async def sso_url(redirect_uri: str | None = ""):
     """
     这个接口是给前端用的。
 
@@ -76,13 +79,20 @@ async def get_sso_url(redirect_uri: str):
     )
 
     sso_url = f"{auth_settings.XYSSO_AUTHORIZE_ENDPOINT}?{query_params}"
-    return sso_url
+
+    ssoinfo = XYSSOInfo(
+        client_id=auth_settings.XYSSO_CLIENT_ID,
+        response_type="code",
+        url=sso_url,
+        scopes=Scope.scopes,
+        redirect_uri=redirect_uri,
+    )
+
+    return ssoinfo
 
 
 @api.post("/token", response_model=TokenData)
-async def sso_token(
-    request: Request, form: Annotated[OAuth2AuthorizationCodeForm, Depends()]
-):
+async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
     """
     这个令牌接口是SSO专用的，因为内部还调用了 `XYSSO_TOKEN_ENPOINT` 接口获取用户信息
 
@@ -128,7 +138,19 @@ async def sso_token(
 
     # token部分是通用的，都是用户名来做负载
     token = TokenData.simple_create(username=xy_resp.username, scopes=scopes)
+    logger.debug(f"发放token {token.model_dump()}")
     return token
+
+
+@api.get("/refresh_token")
+async def refresh_token(payload: Payload = NeedScope()):
+    if payload.typ != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="发送来的Token 不是刷新令牌"
+        )
+
+    # TODO ： 刷新令牌
+    ...
 
 
 _description = f"""
@@ -158,13 +180,19 @@ xysso_bearer = OAuth2AuthorizationCodeBearer(
 api.dependencies.append(Depends(xysso_bearer))
 
 
-@api.get("/test_sso_auth", tags=["test"])
+@api.get(
+    "/test_sso_auth",
+    tags=["test"],
+    response_model=AccessTokenADP,
+    dependencies=[NeedScope(Scope.user)],
+)
 async def test(access_token: AccessTokenADP):
     """
     用来测试SSO令牌。
 
-    `OpenAPI`的认真工具登录成功后通过这个接口测试是否能够跑通。
-
+    `OpenAPI`的认证工具登录成功后通过这个接口测试是否能够跑通。
     返回 `200-OK` 还有 `Authorization` 凭据。
+
+    Scopes: <no-scope>
     """
     return access_token

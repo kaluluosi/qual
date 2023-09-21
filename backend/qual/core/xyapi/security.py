@@ -5,13 +5,12 @@ AccessToken的创建和解析
 
 """
 
-import enum
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Literal, Self
 from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import (
     HTTPAuthorizationCredentials,
-    SecurityScopes,
     HTTPBearer,
+    SecurityScopes,
 )
 from jose import jwt
 from jose.exceptions import JWTError
@@ -90,6 +89,7 @@ class Payload(BaseModel):
     aud: list[str] = Field(default_factory=list, description="受众")
     nbf: datetime = Field(default_factory=datetime.utcnow, description="签发时间，时间戳")
     jti: str = Field(default="", description="编号")
+    typ: Literal["access", "refresh"] = Field(default="access", description="类型")
     scopes: list[str] = Field(default_factory=list, description="权限范围")
 
     @classmethod
@@ -139,49 +139,6 @@ class TokenData(BaseModel):
     token_type: str = "bearer"
 
     @classmethod
-    def create(
-        cls,
-        payload: Payload,
-        expires_min: int = settings.JWT_EXPIRE_MINUTES,
-        refresh_expires: int = settings.JWT_REFRESH_EXPIRE_MINUTES,
-        token_type: str = "bearer",
-    ) -> Self:
-        """
-        原始Token创建
-
-        Args:
-            payload (Payload): 负载
-            expires_min (int, optional): 有效期. Defaults to 15.
-            refresh_expires (int, optional): 刷新令牌有效期. Defaults to 43200.
-            token_type (str, optional): 令牌类型. Defaults to "bearer".
-
-        Returns:
-            Self: 令牌数据
-        """
-        expires_min = expires_min
-        refresh_expires = refresh_expires
-
-        access_token_pl = payload.model_copy()
-        refresh_token_pl = payload.model_copy()
-        refresh_token_pl.scopes.append(
-            Scope.refresh_token
-        )  # 限制refresh_token只能用于refresh_token Scope的接口
-
-        # XXX: 这里有个问题，我认为应该启用Scope。
-        # refresh_token应该限制只能访问刷新令牌接口，其他接口禁止访问。
-
-        # XXX: OpenAPI的Oauth2AuthorizationCodeBeaerer模式无法传递Scope表单，导致了通过
-        # OpenAPI来创建Token是没有Scope的
-
-        access_token = access_token_pl.to_jwt(expires_min)
-        refresh_token = refresh_token_pl.to_jwt(refresh_expires)
-        return cls(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            token_type=token_type,
-        )
-
-    @classmethod
     def simple_create(
         cls,
         username: str,
@@ -193,9 +150,13 @@ class TokenData(BaseModel):
         """
         这是个简易jwt创建接口，通过username和scopes创建令牌。
 
+        access_token的scope通过scopes参数定义。
+        refresh_token的scope默认是空。
+
+
         Args:
             username (str): _description_
-            scopes (list[str]): _description_
+            scopes (list[str]): 这个scope只会用作access_token，不会用于refresh_token
             expires_min (int, optional): _description_. Defaults to settings.JWT_EXPIRE_MINUTES.
             refresh_expires (int, optional): _description_. Defaults to settings.JWT_REFRESH_EXPIRE_MINUTES.
             token_type (str, optional): _description_. Defaults to "bearer".
@@ -204,10 +165,10 @@ class TokenData(BaseModel):
             _type_: _description_
         """
         access_token_payload = Payload(sub=username, scopes=scopes)
+        access_token_payload.typ = "access"
+
         refresh_token_payload = access_token_payload.model_copy()
-        refresh_token_payload.scopes = [
-            Scope.refresh_token
-        ]  # 限制refresh_token只能用于refresh_token Scope的接口
+        refresh_token_payload.typ = "refresh"
 
         access_token = access_token_payload.to_jwt(expires_min)
         refresh_token = refresh_token_payload.to_jwt(refresh_expires)
@@ -219,11 +180,14 @@ class TokenData(BaseModel):
         )
 
 
+# 这是通用的从请求Headers中解析`Bearer`令牌的依赖项
+# 如果你在请求结果中看到了 `Not authenicated` 那么都是这个依赖项拦截的结果
 access_token_bearer = HTTPBearer(scheme_name="Access Token", description="JWT访问令牌")
+# 这是Annotated包装好的依赖项
 AccessTokenADP = Annotated[HTTPAuthorizationCredentials, Depends(access_token_bearer)]
 
 
-def jwt_token_payload(access_token: AccessTokenADP):
+def jwt_payload(access_token: AccessTokenADP):
     """
     抽取JWT访问令牌负载的依赖项
 
@@ -262,7 +226,7 @@ class ScopeMeta(type):
         if item not in self.__scopes__:
             self.__scopes__[item] = item
 
-        return self.__scopes__[item]
+        return item
 
     @property
     def scopes(cls):
@@ -304,8 +268,57 @@ class Scope(metaclass=ScopeMeta):
     ...
 
 
+# `FastAPI`的`Security`是继承自`Depends`，他本身就是当作`Depends`的替代品使用
+# 用`Security`包裹的依赖项会将 `scopes` 参数添加到依赖池里。
+
+
+def jwt_payload_with_check_scope(
+    security_scopes: SecurityScopes, token_payload: Payload = Depends(jwt_payload)
+):
+    if Scope.all not in token_payload.scopes:
+        for scope in security_scopes.scopes:
+            if scope not in token_payload.scopes:
+                raise JWTUnauthorizedError(
+                    detail="Token的Scope不满足", scopes=security_scopes
+                )
+    return token_payload
+
+
+def NeedScope(*scope_check: str):
+    """
+    这个依赖项会解析 `jwt_payload` 并检查 `scopes` 是否满足，然后返回`Payload`
+
+    这个依赖项比较特殊，它返回的是 Security对象，其本身就是个Depends对象，因此不需要用Depends包裹。
+
+    有两种用法：
+
+    一种是当作 `jwt`和`payload` 的依赖项用，这时候不用传`scopes`，返回的依赖就是`Payload`对象。
+
+    另一种是当作`Security`用，由于内部实现也是用的 `SecurityScopes`，所以
+    多个
+
+
+    用法：
+    ```python
+
+    @api.get("/username")
+    async def get_username(payload:Payload=NeedScope()):
+        return payload.sub
+
+    @api.get("/me", dependencies=[NeedScope(Scope.me)])
+    async def get_me():
+        return "This is me"
+
+    ```
+
+    Returns:
+        Callable: ...
+    """
+    return Security(jwt_payload_with_check_scope, scopes=scope_check)
+
+
 # 预定义Scope
 Scope.all = "全范围权限"
-Scope.refresh_token = "刷新令牌"
+
 
 # endregion

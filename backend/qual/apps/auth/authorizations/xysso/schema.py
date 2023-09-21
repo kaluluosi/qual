@@ -62,3 +62,11 @@ class XYTokenResponse(BaseModel):
     username: str
     user: dict[str, UserInfo | str]
     admin: list[str]
+
+
+class XYSSOInfo(BaseModel):
+    client_id: str
+    response_type: str = "code"
+    scopes: dict[str, str]
+    redirect_uri: str | None
+    url: str
