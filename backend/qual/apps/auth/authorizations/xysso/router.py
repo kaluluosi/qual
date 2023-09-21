@@ -4,13 +4,10 @@ import logging
 from urllib.parse import urlencode
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, status
 from qual.core.xyapi.security import (
-    NeedScope,
     TokenData,
     Scope,
-    Payload,
-    RefreshTokenPayloadADP,
 )
 from .settings import Settings as AuthSettings
 from .schema import XYTokenResponse, OAuth2AuthorizationCodeForm, XYSSOInfo
@@ -22,7 +19,12 @@ api = APIRouter(prefix="/xysso", tags=["xysso"])
 auth_settings = AuthSettings()
 
 
-async def req_xyuserinfo(code: str, client_id: str, client_secret: str):
+@api.post("/userinfo", response_model=XYTokenResponse)
+async def req_xyuserinfo(
+    code: Annotated[str, Form()],
+    client_id: Annotated[str, Form()],
+    client_secret: Annotated[str, Form()],
+):
     """
     请求xy用户信息。封装的 `XYSSO_TOKEN_ENDPOINT` 的请求。
 
@@ -73,7 +75,7 @@ async def sso_url(redirect_uri: str | None = ""):
 
     Returns:
 
-        str: url
+        XYSSOInfo: sso认证所需的数据参数
     """
 
     query_params = urlencode(
@@ -100,7 +102,8 @@ async def sso_url(redirect_uri: str | None = ""):
 @api.post("/token", response_model=TokenData)
 async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
     """
-    这个令牌接口是SSO专用的，因为内部还调用了 `XYSSO_TOKEN_ENPOINT` 接口获取用户信息
+    这个令牌接口是直接用授权码获取了Token，因为内部还调用了 `XYSSO_TOKEN_ENPOINT` 接口获取用户信息。
+
 
     这个接口有两个作用：
 
@@ -136,7 +139,11 @@ async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
     xy_resp = await req_xyuserinfo(code, client_id, client_secret)
 
     # TODO: 检查数据库里有没有这个用户，没有就创建用户
-    # XXX: 这里不可避免的要跟创建用户耦合
+    # XXX: 这里不可避免的要跟创建用户耦合。到底要不要后端这个接口一条龙的创建用户呢？
+    # 因为存在这么一个问题，我们还有个OAuth2PasswordBearer授权方式，这个方式会直接创建用户。
+    # 如果之后用户下次登录用XYSSO认证，那么要如何处理？
+    # 还是说我们用户的创建和认证登录分开来做？
+    # 认证只是认证，要怎么绑定用户另外接口处理？
 
     # XXX: 因为XYSSO的一些不规范实现，导致OpenAPI的Scope没有被传递到`oauth2-redirect`页面，因此`form.scope`是空的。
     # 为了避免`OpenAPI`页面创建的Token没有Scope，默认给他一个 `Scope.all` 全能范围。
