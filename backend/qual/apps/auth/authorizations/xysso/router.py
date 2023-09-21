@@ -25,7 +25,7 @@ async def req_xyuserinfo(code: str, client_id: str, client_secret: str):
 
     Returns:
 
-        _type_: _description_
+        XYTokenResponse: XYSSO_TOKEN_ENPOINT的响应体
     """
 
     async with httpx.AsyncClient() as http_client:
@@ -51,8 +51,8 @@ async def get_sso_url(redirect_uri: str):
     流程（vue为例子）：
     1. 前端将自己的登录页url作为 `redirect_uri` 参数发送到这个接口
     2. 这个接口生成一个 xysso 单点登录页面链接，当认证成功后会重定向到 `redirect_uri`
-    3. 当sso页面登录成功后重定向到`redirect_uri`并带上 `code` `xycode` 两个查询参数。
-    4. 前端 `redirect_uri` 页面拿到授权码后再通过 `/xysso/token` 接口获取 `access token` `refresh token`。
+    3. 当sso页面登录成功后重定向到`redirect_uri`并带上 `code` `xycode` 两个查询参数（授权码）。
+    4. 前端 `redirect_uri` 页面拿到`code`后再通过 `/xysso/token` 接口获取 `access token` `refresh token`。
     5. 将 `access token` 前端保存起来（最好保存在`sessionstorage`)，以后请求的时候 `header` 带上 `Authorization: Bearer <access token>`
     6. 将 `refresh token` 保存在 `localstorage`。
 
@@ -95,12 +95,12 @@ async def sso_token(
 
     Args:
 
-        request (Request): _description_
-        form (Annotated[OAuth2AuthorizationCodeForm, Depends): _description_
+        request (Request): 请求体
+        form (Annotated[OAuth2AuthorizationCodeForm, Depends): 表单
 
     Raises:
 
-        HTTPException: _description_
+        HTTPException: XYSSO配置异常
 
     Returns:
 
@@ -120,8 +120,14 @@ async def sso_token(
     xy_resp = await req_xyuserinfo(code, client_id, client_secret)
 
     # TODO: 检查数据库里有没有这个用户，没有就创建用户，
-    # 有就直接读取数据库的用户创建Token。 这一步是可以封装成通用的。
-    token = TokenData.create(Payload(sub=xy_resp.username))
+
+    # XXX: 因为XYSSO的一些不规范实现，导致OpenAPI的Scope没有被传递到`oauth2-redirect`页面，因此`form.scope`是空的。
+    # 为了避免`OpenAPI`页面创建的Token没有Scope，默认给他一个 `Scope.all` 全能范围。
+    # 如果 `form.scope` 不是空，那么就使用 `form` 的 scope。
+    scopes = form.scope if form.scope else [Scope.all]
+
+    # token部分是通用的，都是用户名来做负载
+    token = TokenData.simple_create(username=xy_resp.username, scopes=scopes)
     return token
 
 
@@ -145,7 +151,7 @@ xysso_bearer = OAuth2AuthorizationCodeBearer(
     scheme_name="XYSSO-心源单点登录",
     description=_description,
     scopes=Scope.scopes,
-    # auto_error=True,  # 认证无效的时候自动抛出 HttpException
+    auto_error=True,  # 认证无效的时候自动抛出 HttpException
 )
 
 
@@ -154,4 +160,11 @@ api.dependencies.append(Depends(xysso_bearer))
 
 @api.get("/test_sso_auth", tags=["test"])
 async def test(access_token: AccessTokenADP):
+    """
+    用来测试SSO令牌。
+
+    `OpenAPI`的认真工具登录成功后通过这个接口测试是否能够跑通。
+
+    返回 `200-OK` 还有 `Authorization` 凭据。
+    """
     return access_token

@@ -18,9 +18,9 @@ from jose.exceptions import JWTError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
-from contextvars import ContextVar
 from .settings import BaseSettings
 
+settings = BaseSettings()
 
 # region 密码
 
@@ -105,7 +105,6 @@ class Payload(BaseModel):
         Returns:
             Self: payload对象
         """
-        settings = BaseSettings()
         payload = jwt.decode(
             token, key=settings.JWT_SECRET, algorithms=settings.JWT_ALGORITHM
         )
@@ -117,14 +116,12 @@ class Payload(BaseModel):
         将payload加密成Token串
 
         Args:
-            payload (Self): _description_
-            expires_min (int, optional): _description_. Defaults to 15.
+            payload (Self): 负载
+            expires_min (int, optional): 有效期（分钟），会用来生成`utcnow+expires_min`的时间戳给exp. Defaults to 15.
 
         Returns:
-            str: _description_
+            str: token str
         """
-
-        settings = BaseSettings()
 
         to_encode = self.model_copy()
         to_encode.exp = datetime.utcnow() + timedelta(minutes=expires_min)
@@ -145,8 +142,8 @@ class TokenData(BaseModel):
     def create(
         cls,
         payload: Payload,
-        expires_min: int | None = None,
-        refresh_expires: int | None = None,
+        expires_min: int = settings.JWT_EXPIRE_MINUTES,
+        refresh_expires: int = settings.JWT_REFRESH_EXPIRE_MINUTES,
         token_type: str = "bearer",
     ) -> Self:
         """
@@ -161,21 +158,60 @@ class TokenData(BaseModel):
         Returns:
             Self: 令牌数据
         """
-        settings = BaseSettings()
-        expires_min = expires_min or settings.JWT_EXPIRE_MINUTES
-        refresh_expires = refresh_expires or settings.JWT_REFRESH_EXPIRE_MINUTES
+        expires_min = expires_min
+        refresh_expires = refresh_expires
 
         access_token_pl = payload.model_copy()
         refresh_token_pl = payload.model_copy()
+        refresh_token_pl.scopes.append(
+            Scope.refresh_token
+        )  # 限制refresh_token只能用于refresh_token Scope的接口
 
         # XXX: 这里有个问题，我认为应该启用Scope。
         # refresh_token应该限制只能访问刷新令牌接口，其他接口禁止访问。
 
         # XXX: OpenAPI的Oauth2AuthorizationCodeBeaerer模式无法传递Scope表单，导致了通过
-        # OpenAPI来创建Token是无法
+        # OpenAPI来创建Token是没有Scope的
 
         access_token = access_token_pl.to_jwt(expires_min)
         refresh_token = refresh_token_pl.to_jwt(refresh_expires)
+        return cls(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type=token_type,
+        )
+
+    @classmethod
+    def simple_create(
+        cls,
+        username: str,
+        scopes: list[str],
+        expires_min: int = settings.JWT_EXPIRE_MINUTES,
+        refresh_expires: int = settings.JWT_REFRESH_EXPIRE_MINUTES,
+        token_type: str = "bearer",
+    ):
+        """
+        这是个简易jwt创建接口，通过username和scopes创建令牌。
+
+        Args:
+            username (str): _description_
+            scopes (list[str]): _description_
+            expires_min (int, optional): _description_. Defaults to settings.JWT_EXPIRE_MINUTES.
+            refresh_expires (int, optional): _description_. Defaults to settings.JWT_REFRESH_EXPIRE_MINUTES.
+            token_type (str, optional): _description_. Defaults to "bearer".
+
+        Returns:
+            _type_: _description_
+        """
+        access_token_payload = Payload(sub=username, scopes=scopes)
+        refresh_token_payload = access_token_payload.model_copy()
+        refresh_token_payload.scopes = [
+            Scope.refresh_token
+        ]  # 限制refresh_token只能用于refresh_token Scope的接口
+
+        access_token = access_token_payload.to_jwt(expires_min)
+        refresh_token = refresh_token_payload.to_jwt(refresh_expires)
+
         return cls(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -223,6 +259,9 @@ class ScopeMeta(type):
         self.__scopes__[__name] = __value
 
     def __getattr__(self, item: str) -> str:
+        if item not in self.__scopes__:
+            self.__scopes__[item] = item
+
         return self.__scopes__[item]
 
     @property
@@ -231,9 +270,42 @@ class ScopeMeta(type):
 
 
 class Scope(metaclass=ScopeMeta):
+    """
+    Scope定义搜集器
+
+    用法：
+    ```python
+    # 你只需要像访问成员变量一样
+    Scope.user_read
+
+    # 那么Scope 内部就会产生一个记录
+    {
+        'user_read':'user_read'
+    }
+
+    # 如果你想要描述，就给变量赋值字符串
+    # 这个中文描述会显示在 OpenAPI认证工具的Scopes参数中。
+    Scope.user_read = "用户:读取"
+
+    # 通过 Scope.scopes 可以获取到这个 Scope Map。
+    xysso_bearer = OAuth2AuthorizationCodeBearer(
+        authorizationUrl=auth_settings.XYSSO_AUTHORIZE_ENDPOINT,
+        tokenUrl=api.url_path_for("sso_token"),
+        scheme_name="XYSSO-心源单点登录",
+        scopes=Scope.scopes, # <- 你可以将这个scopes 复制给 OAuth2的Security基类的scopes参数
+    )
+
+    # 这样 OpenAPI页面的认证工具就可以读取到Scope。
+
+    ```
+
+    """
+
     ...
 
 
+# 预定义Scope
+Scope.all = "全范围权限"
 Scope.refresh_token = "刷新令牌"
 
 # endregion

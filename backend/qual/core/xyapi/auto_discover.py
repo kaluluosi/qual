@@ -88,11 +88,11 @@ def discover(module: ModuleType | str, pattern: str = "*"):
     pattern = os.path.join("**", "*", file_pattern)  # <- 'package/**/*/<file_pattern>
 
     # FIXME: glob有个问题 `/**/*` 匹配只能匹配出子目录，无法匹配根目录文件。
-    # 现在之恶能够再做一个 `root_fiels` 的匹配把根目录文件匹出来。
+    # 现在只能够再做一个 `root_files` 的匹配把根目录文件匹出来。
     # 不知道有没有更好的方法，有的话改掉。
     files = glob(pattern, root_dir=module_dir, recursive=True)
 
-    # 因此在这里要多做一次根目录文件的匹配
+    # HACK: 因此在这里要多做一次根目录文件的匹配
     root_files = glob(file_pattern, root_dir=module_dir, recursive=True)
     files.extend(root_files)
 
