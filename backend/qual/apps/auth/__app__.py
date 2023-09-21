@@ -8,4 +8,5 @@ from .router import api
 def install(app: FastAPI):
     # 安装sso登录接口
     api.include_router(sso.api)
+
     app.include_router(api)

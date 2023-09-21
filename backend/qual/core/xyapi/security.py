@@ -23,7 +23,7 @@ settings = BaseSettings()
 
 # region 密码
 
-# XXX: 写死了,以后不知道要不要改为配置的
+# XXX: 写死了,以后不知道要不要改为.env配置的
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
