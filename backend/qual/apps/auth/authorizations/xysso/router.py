@@ -5,10 +5,16 @@ from urllib.parse import urlencode
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from qual.core.xyapi.security import NeedScope, TokenData, Scope, Payload
+from qual.core.xyapi.security import (
+    NeedScope,
+    TokenData,
+    Scope,
+    Payload,
+    RefreshTokenPayloadADP,
+)
 from .settings import Settings as AuthSettings
 from .schema import XYTokenResponse, OAuth2AuthorizationCodeForm, XYSSOInfo
-from qual.core.xyapi.security import AccessTokenADP
+from qual.core.xyapi.security import TokenADP
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +135,8 @@ async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
 
     xy_resp = await req_xyuserinfo(code, client_id, client_secret)
 
-    # TODO: 检查数据库里有没有这个用户，没有就创建用户，
+    # TODO: 检查数据库里有没有这个用户，没有就创建用户
+    # XXX: 这里不可避免的要跟创建用户耦合
 
     # XXX: 因为XYSSO的一些不规范实现，导致OpenAPI的Scope没有被传递到`oauth2-redirect`页面，因此`form.scope`是空的。
     # 为了避免`OpenAPI`页面创建的Token没有Scope，默认给他一个 `Scope.all` 全能范围。
@@ -137,20 +144,9 @@ async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
     scopes = form.scope if form.scope else [Scope.all]
 
     # token部分是通用的，都是用户名来做负载
-    token = TokenData.simple_create(username=xy_resp.username, scopes=scopes)
-    logger.debug(f"发放token {token.model_dump()}")
-    return token
-
-
-@api.get("/refresh_token")
-async def refresh_token(payload: Payload = NeedScope()):
-    if payload.typ != "refresh":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="发送来的Token 不是刷新令牌"
-        )
-
-    # TODO ： 刷新令牌
-    ...
+    token_data = TokenData.simple_create(username=xy_resp.username, scopes=scopes)
+    logger.debug(f"发放token {token_data.model_dump()}")
+    return token_data
 
 
 _description = f"""
@@ -177,16 +173,13 @@ xysso_bearer = OAuth2AuthorizationCodeBearer(
 )
 
 
-api.dependencies.append(Depends(xysso_bearer))
-
-
 @api.get(
     "/test_sso_auth",
     tags=["test"],
-    response_model=AccessTokenADP,
-    dependencies=[NeedScope(Scope.user)],
+    response_model=TokenADP,
+    dependencies=[Depends(xysso_bearer)],
 )
-async def test(access_token: AccessTokenADP):
+async def test(token: TokenADP):
     """
     用来测试SSO令牌。
 
@@ -195,4 +188,4 @@ async def test(access_token: AccessTokenADP):
 
     Scopes: <no-scope>
     """
-    return access_token
+    return token

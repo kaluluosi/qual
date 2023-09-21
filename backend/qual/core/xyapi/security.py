@@ -182,33 +182,63 @@ class TokenData(BaseModel):
 
 # 这是通用的从请求Headers中解析`Bearer`令牌的依赖项
 # 如果你在请求结果中看到了 `Not authenicated` 那么都是这个依赖项拦截的结果
-access_token_bearer = HTTPBearer(scheme_name="Access Token", description="JWT访问令牌")
+token_bearer = HTTPBearer(scheme_name="Token", description="JWT令牌")
 # 这是Annotated包装好的依赖项
-AccessTokenADP = Annotated[HTTPAuthorizationCredentials, Depends(access_token_bearer)]
+TokenADP = Annotated[HTTPAuthorizationCredentials, Depends(token_bearer)]
 
 
-def jwt_payload(access_token: AccessTokenADP):
+def _get_access_token(credential: TokenADP):
     """
-    抽取JWT访问令牌负载的依赖项
+    解析 Access Token 的Payload。
 
-    这个依赖项主要用于解析出访问令牌的负载。
+    会检查是否是`access`类型的Token。
 
     Args:
-        access_token (AccessTokenADP): 访问令牌
+        credential (TokenADP): _description_
 
     Raises:
-        JWTUnauthorizedError: 未认证异常
-
-    Returns:
-        Payload: 负载
+        Exception: Token类型不正确异常
+        JWTUnauthorizedError: 认证失败异常
     """
-
+    token = credential.credentials
     try:
-        payload = Payload.from_jwt(access_token.credentials)
-        return payload
+        payload = Payload.from_jwt(token)
+        if payload.typ != "access":
+            raise Exception("Token类型不是 `access`")
     except JWTError as e:
         raise JWTUnauthorizedError(str(e))
 
+    return payload
+
+
+AccessTokenPayloadADP = Annotated[Payload, Depends(_get_access_token)]
+
+
+def _get_refresh_access_token(credential: TokenADP):
+    """
+    解析 Refresh Token 的Payload。
+
+    会检查是否是 `refresh` 类型的Token。
+
+    Args:
+        credential (TokenADP): _description_
+
+    Raises:
+        Exception: Token类型不正确异常
+        JWTUnauthorizedError: 认证失败异常
+    """
+    token = credential.credentials
+    try:
+        payload = Payload.from_jwt(token)
+        if payload.typ != "refresh":
+            raise JWTUnauthorizedError("Token类型不是 `refresh`")
+    except JWTError as e:
+        raise JWTUnauthorizedError(str(e))
+
+    return payload
+
+
+RefreshTokenPayloadADP = Annotated[Payload, Depends(_get_refresh_access_token)]
 
 # endregion
 
@@ -272,15 +302,36 @@ class Scope(metaclass=ScopeMeta):
 # 用`Security`包裹的依赖项会将 `scopes` 参数添加到依赖池里。
 
 
-def jwt_payload_with_check_scope(
-    security_scopes: SecurityScopes, token_payload: Payload = Depends(jwt_payload)
+def access_token_payload(
+    token_payload: AccessTokenPayloadADP,
+    security_scopes: SecurityScopes,
 ):
-    if Scope.all not in token_payload.scopes:
-        for scope in security_scopes.scopes:
-            if scope not in token_payload.scopes:
-                raise JWTUnauthorizedError(
-                    detail="Token的Scope不满足", scopes=security_scopes
-                )
+    """
+    获取access_token的payload，如果有scopes那么就会去检查权限范围是否匹配。
+
+
+
+    Args:
+
+        token_payload (AccessTokenPayloadADP): _description_
+        security_scopes (SecurityScopes): _description_
+
+    Raises:
+
+        JWTUnauthorizedError: _description_
+
+    Returns:
+
+        _type_: _description_
+    """
+    if security_scopes.scopes:
+        # 如果scopes非空，意味着这个依赖需要检查scopes
+        if Scope.all not in token_payload.scopes:
+            for scope in security_scopes.scopes:
+                if scope not in token_payload.scopes:
+                    raise JWTUnauthorizedError(
+                        detail="Token的Scope不满足", scopes=security_scopes
+                    )
     return token_payload
 
 
@@ -314,7 +365,7 @@ def NeedScope(*scope_check: str):
     Returns:
         Callable: ...
     """
-    return Security(jwt_payload_with_check_scope, scopes=scope_check)
+    return Security(access_token_payload, scopes=scope_check)
 
 
 # 预定义Scope
