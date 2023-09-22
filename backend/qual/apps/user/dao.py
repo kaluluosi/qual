@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy import select
 from qual.core.xyapi.database.sqlalchemy import SessionADP
-from qual.core.xyapi.security import hash_password, AccessTokenPayloadADP
+from qual.core.xyapi.security import hash_password
 from typing import Annotated
 from .model import User
 from .schema import UserCreate, UserUpdate
