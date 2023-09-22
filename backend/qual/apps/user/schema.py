@@ -18,6 +18,7 @@ class UserCreate(BaseModel):
     display_name: str
     password: str
     mail: EmailStr | None = None
+    account_type: AccountType
 
     model_config = ConfigDict(from_attributes=True)
 
