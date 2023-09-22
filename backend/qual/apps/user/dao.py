@@ -4,7 +4,7 @@ from qual.core.xyapi.database.sqlalchemy import SessionADP
 from qual.core.xyapi.security import hash_password, AccessTokenPayloadADP
 from typing import Annotated
 from .model import User
-from .schema import UserCreate
+from .schema import UserCreate, UserUpdate
 
 
 class DAO:
@@ -50,6 +50,14 @@ class DAO:
         self.session.add(user)
         self.session.flush()
         return user
+
+    def update_password(self, user: User, password: str):
+        user.password = hash_password(password)
+
+    def update(self, user: User, user_u: UserUpdate):
+        update_data = user_u.model_dump(exclude_unset=True)
+        for k, v in update_data.items():
+            setattr(user, k, v)
 
 
 UserDAO_ADP = Annotated[DAO, Depends(DAO)]

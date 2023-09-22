@@ -1,18 +1,28 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr
 from .constant import AccountType
 
 
-class UserBase(BaseModel):
+class UserRead(BaseModel):
+    id: int
     username: str
     display_name: str
-    model_config = ConfigDict(from_attributes=True)
     account_type: AccountType
-
-
-class UserRead(UserBase):
-    id: int
-
-
-class UserCreate(UserBase):
-    password: str | None = None
+    password: SecretStr
     mail: EmailStr | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserCreate(BaseModel):
+    username: str
+    display_name: str
+    password: str
+    mail: EmailStr | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserUpdate(BaseModel):
+    display_name: str | None = None
+    mail: EmailStr | None = None
+    model_config = ConfigDict(from_attributes=True)
