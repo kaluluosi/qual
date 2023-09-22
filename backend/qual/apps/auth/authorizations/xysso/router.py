@@ -1,21 +1,21 @@
 import base64
-import httpx
 import logging
-from urllib.parse import urlencode
-from fastapi.security import OAuth2AuthorizationCodeBearer
+import secrets
 from typing import Annotated, cast
+from urllib.parse import urlencode
+
+import httpx
 from fastapi import APIRouter, Depends, Form, HTTPException, status
+from fastapi.security import OAuth2AuthorizationCodeBearer
+
 from qual.apps.user.constant import AccountType
-from qual.apps.user.schema import UserCreate
-from qual.core.xyapi.security import (
-    TokenData,
-    Scope,
-)
-from qual.core.xyapi.exception import HttpExceptionModel
-from .settings import Settings as AuthSettings
-from .schema import UserInfo, XYTokenResponse, OAuth2AuthorizationCodeForm, XYSSOInfo
-from qual.core.xyapi.security import TokenADP
 from qual.apps.user.dao import UserDAO_ADP
+from qual.apps.user.schema import UserCreate
+from qual.core.xyapi.exception import HttpExceptionModel
+from qual.core.xyapi.security import Scope, TokenADP, TokenData
+
+from .schema import OAuth2AuthorizationCodeForm, UserInfo, XYSSOInfo, XYTokenResponse
+from .settings import Settings as AuthSettings
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,11 @@ api = APIRouter(prefix="/xysso", tags=["xysso"])
 auth_settings = AuthSettings()
 
 
-@api.post("/userinfo", response_model=XYTokenResponse)
+@api.post(
+    "/userinfo",
+    response_model=XYTokenResponse,
+    responses={status.HTTP_400_BAD_REQUEST: {"model": HttpExceptionModel}},
+)
 async def req_xyuserinfo(
     code: Annotated[str, Form()],
     client_id: Annotated[str | None, Form()] = None,
@@ -57,7 +61,13 @@ async def req_xyuserinfo(
         )
 
         xy_resp = XYTokenResponse(**response.json())
-    return xy_resp
+
+        if xy_resp.errcode == -1 or xy_resp.errmsg != "ok":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=xy_resp.errmsg
+            )
+
+        return xy_resp
 
 
 @api.options("")
@@ -127,7 +137,7 @@ async def token(
     这个接口有两个作用：
 
     1. 给OpenAPI的 `oauth2_redirect` 页面去获取 `access_token`
-    2. 给前端调用获取 `access_token`（通过提交表单将`code`发送过来）
+    2. 给前端调用获取 `access_token`（通过提交表单将`code`发送过来，除了scope有用到，其他参数都没用）
 
     由于 `OpenAPI`的认证流程中用的表单提交，因此不得已接口也只能用表单了。
 
@@ -166,6 +176,9 @@ async def token(
         user_c = UserCreate(
             username=xy_resp.username,
             display_name=user_info.name[0],
+            # XXX: 我认为这里应该随机生成一个密码，一面以后有什么漏洞导致可以用户名密码的方式访问到这个用户
+            # 比如哪天哪个登录方式忘记判断account_type，空密码或者简单密码给撞到了sso的账户。
+            password=secrets.token_urlsafe(),  # 暂时用secrets标准库生成一个随机密码
             mail=user_info.mail[0],
             account_type=AccountType.xysso,
         )

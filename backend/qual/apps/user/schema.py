@@ -14,5 +14,5 @@ class UserRead(UserBase):
 
 
 class UserCreate(UserBase):
-    plain_password: str | None = None
+    password: str | None = None
     mail: EmailStr | None = None

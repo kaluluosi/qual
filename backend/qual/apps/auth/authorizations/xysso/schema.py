@@ -18,12 +18,12 @@ class OAuth2AuthorizationCodeForm:
     def __init__(
         self,
         *,
-        code: Annotated[str, Form()],
-        grant_type: Annotated[str | None, Form()] = None,
-        client_id: Annotated[str | None, Form()] = None,
-        client_secret: Annotated[str | None, Form()] = None,
-        redirect_uri: Annotated[str | None, Form()] = None,
-        scope: Annotated[str, Form()] = ""
+        code: Annotated[str, Form(description="授权码，一次性的，使用一次后就失效")],
+        grant_type: Annotated[str | None, Form(description="授权类型，没用上")] = None,
+        client_id: Annotated[str | None, Form(description="客户端id，没用上")] = None,
+        client_secret: Annotated[str | None, Form(description="客户都安密钥，没用上")] = None,
+        redirect_uri: Annotated[str | None, Form(description="没用上")] = None,
+        scope: Annotated[str, Form(description="权限范围，为空时默认all")] = ""
     ) -> None:
         self.grant_type = grant_type
         self.code = code

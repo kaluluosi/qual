@@ -1,7 +1,7 @@
-import bcrypt
 from fastapi import Depends
 from sqlalchemy import select
 from qual.core.xyapi.database.sqlalchemy import SessionADP
+from qual.core.xyapi.security import hash_password, AccessTokenPayloadADP
 from typing import Annotated
 from .model import User
 from .schema import UserCreate
@@ -12,6 +12,8 @@ class DAO:
         """
         DOA是一个依赖项，`session` 是作为依赖在控制器里传入。当控制器执行结束的时候
         `session`会自动`commit`。
+
+        缺点是这是个依赖项，无法独立与请求执行。
 
         Args:
             session (AsyncSessionADP): 会话依赖项
@@ -42,10 +44,8 @@ class DAO:
         return self.session.scalars(stmt)
 
     def create(self, user_c: UserCreate) -> User:
-        if user_c.plain_password:
-            user_c.plain_password = bcrypt.hashpw(
-                user_c.plain_password.encode("utf-8"), bcrypt.gensalt()
-            ).hex()
+        if user_c.password:
+            user_c.password = hash_password(user_c.password)
         user = User(**user_c.model_dump())
         self.session.add(user)
         self.session.flush()

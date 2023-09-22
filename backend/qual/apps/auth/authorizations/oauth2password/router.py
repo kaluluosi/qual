@@ -1,9 +1,9 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from qual.apps.user.constant import AccountType
 from qual.core.xyapi.exception import HttpExceptionModel
 from qual.core.xyapi.security import TokenADP, TokenData, verify_password
+from qual.apps.user.constant import AccountType
 from qual.apps.user.dao import UserDAO_ADP
 
 api = APIRouter(prefix="/oath2password", tags=["oath2password"])
@@ -30,9 +30,11 @@ async def token(
     认证并获取token
 
     Args:
+
         form (Annotated[OAuth2PasswordRequestForm, Depends): 表单
 
     Returns:
+
         TokenData: {"access_token":"xxx","refresh_token":"xxx"} 结构
     """
 
