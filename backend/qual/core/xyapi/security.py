@@ -6,7 +6,7 @@ AccessToken的创建和解析
 """
 
 from typing import Annotated, Any, Literal, Self
-from fastapi import Depends, HTTPException, status, Security
+from fastapi import Depends, Security
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
@@ -17,6 +17,7 @@ from jose.exceptions import JWTError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
+from .exception import JWTUnauthorizedError
 from .settings import BaseSettings
 
 settings = BaseSettings()
@@ -58,24 +59,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 # region Token
-
-
-class JWTUnauthorizedError(HTTPException):
-    def __init__(
-        self, detail: Any = None, scopes: SecurityScopes | None = None
-    ) -> None:
-        if scopes:
-            super().__init__(
-                status.HTTP_401_UNAUTHORIZED,
-                detail,
-                headers={"WWW-Authenticate": f"Bearer scopes={scopes.scope_str}"},
-            )
-        else:
-            super().__init__(
-                status.HTTP_401_UNAUTHORIZED,
-                detail,
-                headers={"WWW-Authenticate": "Bearer"},
-            )
 
 
 class Payload(BaseModel):

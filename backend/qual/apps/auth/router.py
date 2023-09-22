@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security.api_key import APIKeyQuery
 from qual.core.xyapi.security import RefreshTokenPayloadADP, TokenData
 
 api = APIRouter(prefix="/auth", tags=["auth"])

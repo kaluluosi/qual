@@ -22,7 +22,7 @@ class DAO:
         user = self.session.get(User, id)
         return user
 
-    def get_by_username(self, username: str):
+    def get_by_username(self, username: str) -> User | None:
         stmt = select(User).where(User.username == username)
         user = self.session.scalar(stmt)
         return user
@@ -41,10 +41,11 @@ class DAO:
         stmt = select(User).offset(offset).limit(limit)
         return self.session.scalars(stmt)
 
-    def create(self, user_c: UserCreate):
-        user_c.password = bcrypt.hashpw(
-            user_c.password.encode("utf-8"), bcrypt.gensalt()
-        ).hex()
+    def create(self, user_c: UserCreate) -> User:
+        if user_c.plain_password:
+            user_c.plain_password = bcrypt.hashpw(
+                user_c.plain_password.encode("utf-8"), bcrypt.gensalt()
+            ).hex()
         user = User(**user_c.model_dump())
         self.session.add(user)
         self.session.flush()

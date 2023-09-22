@@ -3,15 +3,19 @@ import httpx
 import logging
 from urllib.parse import urlencode
 from fastapi.security import OAuth2AuthorizationCodeBearer
-from typing import Annotated
+from typing import Annotated, cast
 from fastapi import APIRouter, Depends, Form, HTTPException, status
+from qual.apps.user.constant import AccountType
+from qual.apps.user.schema import UserCreate
 from qual.core.xyapi.security import (
     TokenData,
     Scope,
 )
+from qual.core.xyapi.exception import HttpExceptionModel
 from .settings import Settings as AuthSettings
-from .schema import XYTokenResponse, OAuth2AuthorizationCodeForm, XYSSOInfo
+from .schema import UserInfo, XYTokenResponse, OAuth2AuthorizationCodeForm, XYSSOInfo
 from qual.core.xyapi.security import TokenADP
+from qual.apps.user.dao import UserDAO_ADP
 
 logger = logging.getLogger(__name__)
 
@@ -101,8 +105,19 @@ async def sso_url(redirect_uri: str | None = ""):
     return ssoinfo
 
 
-@api.post("/token", response_model=TokenData)
-async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
+@api.post(
+    "/token",
+    response_model=TokenData,
+    responses={
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "model": HttpExceptionModel,
+            "description": "可能是后端SSO配置错误",
+        }
+    },
+)
+async def token(
+    form: Annotated[OAuth2AuthorizationCodeForm, Depends()], user_dao: UserDAO_ADP
+):
     """
     这个令牌接口是直接用授权码获取了Token。
 
@@ -132,7 +147,7 @@ async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
 
     if not auth_settings.XYSSO_CLIENT_ID or not auth_settings.XYSSO_CLIENT_SECRET:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="XYSSO_CLIENT_ID、XYSSO_CLIENT_SECRET没有配置。",
         )
 
@@ -143,11 +158,19 @@ async def sso_token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
     xy_resp = await req_xyuserinfo(code, client_id, client_secret)
 
     # TODO: 检查数据库里有没有这个用户，没有就创建用户
-    # XXX: 这里不可避免的要跟创建用户耦合。到底要不要后端这个接口一条龙的创建用户呢？
-    # 因为存在这么一个问题，我们还有个OAuth2PasswordBearer授权方式，这个方式会直接创建用户。
-    # 如果之后用户下次登录用XYSSO认证，那么要如何处理？
-    # 还是说我们用户的创建和认证登录分开来做？
-    # 认证只是认证，要怎么绑定用户另外接口处理？
+    # XXX: 这里不可避免的要跟具体的创建用户耦合。到底要不要后端这个接口一条龙的创建用户呢？
+    user = user_dao.get_by_username(xy_resp.username)
+    if not user:
+        user_info = list(xy_resp.user.values())[0]
+        user_info = cast(UserInfo, user_info)
+        user_c = UserCreate(
+            username=xy_resp.username,
+            display_name=user_info.name[0],
+            mail=user_info.mail[0],
+            account_type=AccountType.xysso,
+        )
+        user_dao.create(user_c)
+        logger.info(f"初次创建xysso用户 {user_c.username}")
 
     # XXX: 因为XYSSO的一些不规范实现，导致OpenAPI的Scope没有被传递到`oauth2-redirect`页面，因此`form.scope`是空的。
     # 为了避免`OpenAPI`页面创建的Token没有Scope，默认给他一个 `Scope.all` 全能范围。
@@ -175,7 +198,7 @@ client_secret:  {auth_settings.XYSSO_CLIENT_SECRET}
 
 xysso_bearer = OAuth2AuthorizationCodeBearer(
     authorizationUrl=auth_settings.XYSSO_AUTHORIZE_ENDPOINT,
-    tokenUrl=api.url_path_for("sso_token"),
+    tokenUrl=api.url_path_for("token"),
     # refreshUrl=api.url_path_for("sso_refresh_token"), # OpenAPI的token刷新完全是废的，所以设置了
     scheme_name="XYSSO-心源单点登录",
     description=_description,
