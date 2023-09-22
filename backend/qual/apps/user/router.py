@@ -1,5 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Body, HTTPException, status
+from qual.apps.user.constant import AccountType
 from qual.apps.user.dao import UserDAO_ADP
 from qual.apps.user.schema import UserRead, UserCreate, UserUpdate
 from qual.core.xyapi import AccessTokenPayloadADP, ExistedError
@@ -66,8 +67,13 @@ async def sign_in(user_c: UserCreate, user_dao: UserDAO_ADP):
     user = user_dao.get_by_username(user_c.username)
     if user:
         raise ExistedError(detail=f"用户名 {user_c.username} 已经存在")
-
+    user_c.account_type = AccountType.local
     user_dao.create(user_c)
+
+
+@api.get("", response_model=list[UserRead])
+async def get_users(payload: AccessTokenPayloadADP, user_dao: UserDAO_ADP):
+    return user_dao.get()
 
 
 @api.get("/{id}", response_model=UserRead)
