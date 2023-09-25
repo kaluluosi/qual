@@ -170,7 +170,7 @@ token_bearer = HTTPBearer(scheme_name="Token", description="JWT令牌")
 TokenADP = Annotated[HTTPAuthorizationCredentials, Depends(token_bearer)]
 
 
-def _get_access_token(credential: TokenADP):
+def _get_access_token_payload(credential: TokenADP):
     """
     解析 Access Token 的Payload。
 
@@ -194,10 +194,10 @@ def _get_access_token(credential: TokenADP):
     return payload
 
 
-AccessTokenPayloadADP = Annotated[Payload, Depends(_get_access_token)]
+AccessTokenPayloadADP = Annotated[Payload, Depends(_get_access_token_payload)]
 
 
-def _get_refresh_access_token(credential: TokenADP):
+def _get_refresh_access_token_payload(credential: TokenADP):
     """
     解析 Refresh Token 的Payload。
 
@@ -221,7 +221,7 @@ def _get_refresh_access_token(credential: TokenADP):
     return payload
 
 
-RefreshTokenPayloadADP = Annotated[Payload, Depends(_get_refresh_access_token)]
+RefreshTokenPayloadADP = Annotated[Payload, Depends(_get_refresh_access_token_payload)]
 
 # endregion
 
