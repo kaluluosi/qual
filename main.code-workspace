@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "logs"
+		},
+		{
+			"path": "docker"
 		}
 	],
 	"settings": {
