@@ -176,7 +176,7 @@ async def token(
         user_c = UserCreate(
             username=xy_resp.username,
             display_name=user_info.name[0],
-            # XXX: 我认为这里应该随机生成一个密码，一面以后有什么漏洞导致可以用户名密码的方式访问到这个用户
+            # XXX: 我认为这里应该随机生成一个密码，以免以后有什么漏洞导致可以用户名密码的方式访问到这个用户
             # 比如哪天哪个登录方式忘记判断account_type，空密码或者简单密码给撞到了sso的账户。
             password=secrets.token_urlsafe(),  # 暂时用secrets标准库生成一个随机密码
             mail=user_info.mail[0],
