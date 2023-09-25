@@ -51,7 +51,7 @@ async def token(
     elif user.account_type != AccountType.local:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"用户已存在，但是是{user.account_type.value}。",
+            detail=f"用户已存在，但是类型是 {user.account_type.value}。",
         )
     elif not verify_password(form.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="密码不正确")
