@@ -30,22 +30,22 @@ def test_discover_with_submodule():
     """
     测试模块发现：子模块导入串
     """
-    modules = discover(qual.core, "config*")
+    modules = discover(qual.core, "logger*")
     modules = list(modules)
 
     assert len(modules) == 1
-    assert modules[0] == "qual.core.config"
+    assert modules[0] == "qual.core.logger"
 
 
 def test_discover_with_submodule_name():
     """
     测试模块发现：用子模块导入串字符
     """
-    modules = discover("qual.core", "config*")
+    modules = discover("qual.core", "logger*")
     modules = list(modules)
 
     assert len(modules) == 1
-    assert modules[0] == "qual.core.config"
+    assert modules[0] == "qual.core.logger"
 
 
 def test_discover_with_no_match():
@@ -74,10 +74,10 @@ def test_auto_discover_with_exist():
     测试模块自动发现导入: 存在匹配的模块
     """
 
-    modules = auto_discover(qual.core, "config")
+    modules = auto_discover(qual.core, "logger")
 
     assert len(modules) == 1
-    assert "qual.core.config" in modules
+    assert "qual.core.logger" in modules
 
 
 def test_auto_discover_with_not_match():
