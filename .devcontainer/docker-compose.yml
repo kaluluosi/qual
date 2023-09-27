@@ -24,6 +24,7 @@ services:
             PGADMIN_DEFAULT_PASSWORD: postgres
         ports:
             - "5050:80"
+        # TODO: 这里还要再将一些配置持久化挂到卷里，不然每次重新编译docker都会没了。
         
     db:
         image: postgres:latest
