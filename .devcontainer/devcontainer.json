@@ -27,10 +27,12 @@
     // Features to add to the dev container. More info: https://containers.dev/features.
     "features": {
         "ghcr.io/devcontainers/features/node:1": {}
-    }
+    },
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // This can be used to network with other containers or the host.
-    // "forwardPorts": [5000, 5432],
+    "forwardPorts": [
+        5432
+    ]
     // Use 'postCreateCommand' to run commands after the container is created.
     // "postCreateCommand": ""
     // Configure tool-specific properties.
