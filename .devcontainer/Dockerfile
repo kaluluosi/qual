@@ -11,7 +11,13 @@ ENV PYTHONUNBUFFERED 1
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends \
 #     xclip 
+ARG USER=vscode
+USER $USER
+ARG HOME="/home/${USER}"
 
+ENV PATH="${HOME}/.local/bin:$PATH"
 
-RUN pip install poetry && poetry config virtualenvs.in-project true
+RUN curl -sSL https://install.python-poetry.org | python3 -\
+    # && export PATH="${HOME}/.local/bin:$PATH" \
+    && poetry config virtualenvs.in-project true
 
