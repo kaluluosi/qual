@@ -6,7 +6,7 @@ AccessToken的创建和解析
 """
 
 from typing import Annotated, Any, Literal, Self
-from fastapi import Depends, Form, Request, Security
+from fastapi import Depends, Form, Security
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
