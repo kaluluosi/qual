@@ -13,5 +13,5 @@ ENV PYTHONUNBUFFERED 1
 #     xclip 
 
 
-RUN pip install poetry
+RUN pip install poetry && poetry config virtualenvs.in-project true
 
