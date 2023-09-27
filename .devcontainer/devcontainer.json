@@ -20,7 +20,8 @@
                 "EditorConfig.EditorConfig",
                 "njpwerner.autodocstring",
                 "ms-python.vscode-pylance",
-                "ms-python.python"
+                "ms-python.python",
+                "redhat.vscode-yaml"
             ]
         }
     },
@@ -31,7 +32,8 @@
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // This can be used to network with other containers or the host.
     "forwardPorts": [
-        5432
+        5432,
+        5050
     ]
     // Use 'postCreateCommand' to run commands after the container is created.
     // "postCreateCommand": ""
