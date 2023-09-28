@@ -1,35 +1,35 @@
 {
-	"folders": [
-		{
-			"path": "backend"
-		},
-		{
-			"path": "frontend"
-		},
-		{
-			"path": "logs"
-		},
-		{
-			"path": "docker"
-		},
-		{
-			"path": ".devcontainer"
-		}
-	],
-	"settings": {
-		"[python]": {
-			"editor.defaultFormatter": "ms-python.black-formatter"
-		},
-		"python.formatting.provider": "none",
-		"pasteImage.path": "${currentFileDir}/assets"
-	},
-	"extensions": {
-		"recommendations": [
-			"ms-vscode-remote.remote-containers",
-			"tamasfe.even-better-toml",
-			"yzhang.markdown-all-in-one",
-			"gruntfuggly.todo-tree",
-			"editorconfig.editorconfig"
-		]
-	}
+    "folders": [
+        {
+            "path": "backend"
+        },
+        {
+            "path": "frontend"
+        },
+        {
+            "path": "logs"
+        },
+        {
+            "path": "docker"
+        },
+        {
+            "path": ".devcontainer"
+        }
+    ],
+    "settings": {
+        "[python]": {
+            "editor.defaultFormatter": "ms-python.black-formatter"
+        },
+        "python.formatting.provider": "none",
+        "pasteImage.path": "${currentFileDir}/assets"
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-vscode-remote.remote-containers",
+            "tamasfe.even-better-toml",
+            "yzhang.markdown-all-in-one",
+            "gruntfuggly.todo-tree",
+            "editorconfig.editorconfig"
+        ]
+    }
 }
