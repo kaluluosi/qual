@@ -8,21 +8,22 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-python.black-formatter",
-                "charliermarsh.ruff",
-                "donjayamanne.python-environment-manager",
-                "Vue.vscode-typescript-vue-plugin",
-                "Vue.volar",
-                "Gruntfuggly.todo-tree",
-                "yzhang.markdown-all-in-one",
-                "tamasfe.even-better-toml",
-                "ms-azuretools.vscode-docker",
-                "EditorConfig.EditorConfig",
-                "njpwerner.autodocstring",
-                "ms-python.vscode-pylance",
-                "ms-python.python",
-                "redhat.vscode-yaml"
-            ]
+				"ms-python.black-formatter",
+				"charliermarsh.ruff",
+				"donjayamanne.python-environment-manager",
+				"Vue.vscode-typescript-vue-plugin",
+				"Vue.volar",
+				"Gruntfuggly.todo-tree",
+				"yzhang.markdown-all-in-one",
+				"tamasfe.even-better-toml",
+				"ms-azuretools.vscode-docker",
+				"EditorConfig.EditorConfig",
+				"njpwerner.autodocstring",
+				"ms-python.vscode-pylance",
+				"ms-python.python",
+				"redhat.vscode-yaml",
+				"Casbin.vscode-casbin"
+			]
         }
     },
     // Features to add to the dev container. More info: https://containers.dev/features.
