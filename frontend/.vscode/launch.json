@@ -6,10 +6,16 @@
     "configurations": [
         {
             "name": "run dev",
-            "type": "python",
             "request": "launch",
-            "module": "qual",
-            "justMyCode": false
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "**/node_modules/**"
+            ],
+            "type": "node"
         }
     ]
 }

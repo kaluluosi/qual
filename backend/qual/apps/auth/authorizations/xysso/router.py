@@ -70,7 +70,7 @@ async def req_xyuserinfo(
         return xy_resp
 
 
-@api.options("")
+@api.options("", response_model=XYSSOInfo)
 async def sso_url(redirect_uri: str | None = ""):
     """
     这个接口是给前端用的。
@@ -228,7 +228,7 @@ xysso_bearer = OAuth2AuthorizationCodeBearer(
 )
 async def test(token: TokenADP):
     """
-    用来测试SSO令牌。
+    用来测试SSO令牌，返回的是令牌凭证。
 
     `OpenAPI`的认证工具登录成功后通过这个接口测试是否能够跑通。
     返回 `200-OK` 还有 `Authorization` 凭据。

@@ -20,15 +20,16 @@
 		"[python]": {
 			"editor.defaultFormatter": "ms-python.black-formatter"
 		},
-		"python.formatting.provider": "none"
+		"python.formatting.provider": "none",
+		"pasteImage.path": "${currentFileDir}/assets"
 	},
 	"extensions": {
 		"recommendations": [
 			"ms-vscode-remote.remote-containers",
-			"ms-azuretools.vscode-docker",
 			"tamasfe.even-better-toml",
 			"yzhang.markdown-all-in-one",
-			"gruntfuggly.todo-tree"
+			"gruntfuggly.todo-tree",
+			"editorconfig.editorconfig"
 		]
 	}
 }

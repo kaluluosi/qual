@@ -48,7 +48,7 @@ async def token(
     user = user_dao.get_by_username(username=form.username)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="用户不存在")
-    elif user.account_type != AccountType.local:
+    elif user.account_type != AccountType.local:  # password模式只认local类型账户
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"用户已存在，但是类型是 {user.account_type.value}。",

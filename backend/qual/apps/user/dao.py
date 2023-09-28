@@ -59,5 +59,15 @@ class DAO:
         for k, v in update_data.items():
             setattr(user, k, v)
 
+    def is_valid(self, username: str):
+        user = self.get_by_username(username)
+        if not user:
+            return False
+
+        # TODO: 判断用户是否无效，比如 `status` `locked` `actived` 之类。
+        # 这部分逻辑暂时没有留空，以后补充。
+
+        return True
+
 
 UserDAO_ADP = Annotated[DAO, Depends(DAO)]

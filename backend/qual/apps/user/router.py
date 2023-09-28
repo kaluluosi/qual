@@ -77,7 +77,7 @@ async def get_users(payload: AccessTokenPayloadADP, user_dao: UserDAO_ADP):
 
 
 @api.get("/{id}", response_model=UserRead)
-async def get_user(id: int, user_dao: UserDAO_ADP):
+async def get_user(id: int, user_dao: UserDAO_ADP, payload: AccessTokenPayloadADP):
     user = user_dao.get_by_id(id)
     if not user:
         raise NotFoundError(detail=f"用户 {id} 不存在")

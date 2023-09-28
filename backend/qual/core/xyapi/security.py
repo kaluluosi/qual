@@ -6,7 +6,7 @@ AccessToken的创建和解析
 """
 
 from typing import Annotated, Any, Literal, Self
-from fastapi import Depends, Security
+from fastapi import Depends, Form, Security
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
@@ -174,7 +174,10 @@ def _get_access_token_payload(credential: TokenADP):
     """
     解析 Access Token 的Payload。
 
-    会检查是否是`access`类型的Token。
+    1. 会检查是否是`access`类型的Token。
+
+    2. 会检查是否过期。
+
 
     Args:
         credential (TokenADP): _description_
@@ -197,20 +200,26 @@ def _get_access_token_payload(credential: TokenADP):
 AccessTokenPayloadADP = Annotated[Payload, Depends(_get_access_token_payload)]
 
 
-def _get_refresh_access_token_payload(credential: TokenADP):
+async def _get_refresh_access_token_payload(refresh_token: Annotated[str, Form()] = ""):
     """
     解析 Refresh Token 的Payload。
 
     会检查是否是 `refresh` 类型的Token。
 
+    [参考Postman的刷新令牌规范流程](https://auth0.com/docs/secure/tokens/refresh-tokens/use-refresh-tokens#use-basic-authentication)
+
+    XXX: 研究Postman的OAuth2和刷新令牌功能的时候发现他们是将刷新令牌放到表单里Post到刷新令牌接口，而不是放到认证头里。
+    同时，他们还会再认证头里传递 `Basic {base64(<client_id>:<client_secret>)}`。刷新令牌机制要兼容Postman，因此修改。
+    同时也解决了OpenAPI的刷新令牌机制不工作问题（大概）。
+
     Args:
-        credential (TokenADP): _description_
+        refresh_token (str,Form()): 从表单中获取refresh_token
 
     Raises:
         Exception: Token类型不正确异常
         JWTUnauthorizedError: 认证失败异常
     """
-    token = credential.credentials
+    token = refresh_token
     try:
         payload = Payload.from_jwt(token)
         if payload.typ != "refresh":
