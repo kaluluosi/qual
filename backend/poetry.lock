@@ -129,6 +129,20 @@ jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
+name = "casbin"
+version = "1.31.0"
+description = "An authorization library that supports access control models like ACL, RBAC, ABAC in Python"
+optional = false
+python-versions = ">=3.3"
+files = [
+    {file = "casbin-1.31.0-py3-none-any.whl", hash = "sha256:84847025ac5df625ef43c18493a8120dd98079afb7b542c15f1d7f4274f0f0dd"},
+    {file = "casbin-1.31.0.tar.gz", hash = "sha256:06dca31aba90bf2627745bf30744259674951fb38d625428c0cf9983649d0104"},
+]
+
+[package.dependencies]
+simpleeval = ">=0.9.11"
+
+[[package]]
 name = "certifi"
 version = "2023.7.22"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -978,6 +992,17 @@ files = [
 ]
 
 [[package]]
+name = "simpleeval"
+version = "0.9.13"
+description = "A simple, safe single expression evaluator library."
+optional = false
+python-versions = "*"
+files = [
+    {file = "simpleeval-0.9.13-py2.py3-none-any.whl", hash = "sha256:22a2701a5006e4188d125d34accf2405c2c37c93f6b346f2484b6422415ae54a"},
+    {file = "simpleeval-0.9.13.tar.gz", hash = "sha256:4a30f9cc01825fe4c719c785e3762623e350c4840d5e6855c2a8496baaa65fac"},
+]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -1126,4 +1151,4 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "564c8c3eabd544f5e92da5accf9fd2dffa6506ffb66c31ec2007ec38eda8be58"
+content-hash = "261bef43ad2a08e616e05d1afa17c775b9357efd1bbcbe81ceb07236a0ef827b"
