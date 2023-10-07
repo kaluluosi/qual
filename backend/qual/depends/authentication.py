@@ -16,6 +16,9 @@ def authenticate(
     """
     认证并返回当前登录的用户
 
+    这个依赖项是用来给 `openapi` 用的， 实际最终AccessTokenPayloadADP起作用。
+    后面的依赖项都是用来给 `opanapi` 页面注册认证模式用的。
+
     Args:
         token (AccessTokenPayloadADP): 访问令牌
         user_dao (UserDAO_ADP): 用户DAO
