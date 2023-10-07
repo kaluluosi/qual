@@ -209,7 +209,8 @@ async def _get_refresh_access_token_payload(refresh_token: Annotated[str, Form()
     [参考Postman的刷新令牌规范流程](https://auth0.com/docs/secure/tokens/refresh-tokens/use-refresh-tokens#use-basic-authentication)
 
     XXX: 研究Postman的OAuth2和刷新令牌功能的时候发现他们是将刷新令牌放到表单里Post到刷新令牌接口，而不是放到认证头里。
-    同时，他们还会再认证头里传递 `Basic {base64(<client_id>:<client_secret>)}`。刷新令牌机制要兼容Postman，因此修改。
+    同时，他们还会再认证头里传递 `Basic {base64(<client_id>:<client_secret>)}`给后端验证 `client_id`和`client_secret`。
+    刷新令牌机制要兼容Postman，因此修改。
     同时也解决了OpenAPI的刷新令牌机制不工作问题（大概）。
 
     Args:
