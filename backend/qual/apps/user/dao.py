@@ -13,7 +13,16 @@ class DAO:
         DOA是一个依赖项，`session` 是作为依赖在控制器里传入。当控制器执行结束的时候
         `session`会自动`commit`。
 
-        缺点是这是个依赖项，无法独立与请求执行。
+        用例：
+        ```python
+        with create_session() as session:
+            dao = DAO(session) # 手动传入 `session`
+
+            dao.first_or_create(
+                UserCreate(username="admin", display_name="admin", password="admin")
+            )
+
+        ```
 
         Args:
             session (AsyncSessionADP): 会话依赖项

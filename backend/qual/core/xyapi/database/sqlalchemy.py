@@ -64,7 +64,7 @@ def create_session():
         Session: 会话
     """
 
-    yield _create_session()
+    return _create_session()
 
 
 def _create_session():
@@ -84,8 +84,8 @@ SessionADP = Annotated[Session, Depends(_create_session, use_cache=True)]
 
 
 @asynccontextmanager
-async def create_async_session():
-    yield _create_async_session()
+def create_async_session():
+    return _create_async_session()
 
 
 async def _create_async_session():
