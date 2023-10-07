@@ -99,6 +99,8 @@ class DAO:
         update_data = user_u.model_dump(exclude_unset=True)
         for k, v in update_data.items():
             setattr(user, k, v)
+        self.session.flush()
+        return user
 
     def is_valid(self, username: str):
         user = self.get_by_username(username)
