@@ -6,7 +6,7 @@
 
 import click
 from sqlalchemy_utils import database_exists, create_database, drop_database
-from qual.core.database import engine  # <- 因为这里导入了所以引擎初始化了
+from qual.core.database import engine  # <- 因为这里导入了所以引擎初始化了， XXX：cli无法剥离因为这里耦合了
 from qual.core.xyapi.auto_discover import auto_discover
 from alembic.config import main as alembic_main
 
