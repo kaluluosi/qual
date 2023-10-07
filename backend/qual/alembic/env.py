@@ -6,7 +6,9 @@ from sqlalchemy import pool
 from alembic import context
 
 # 导入项目的配置文件
-from qual.core.settings import settings
+from qual.core.xyapi.settings import BaseSettings
+
+settings = BaseSettings()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -27,10 +29,9 @@ config.set_section_option(section, "sqlalchemy.url", settings.DB_DSN)
 # target_metadata = mymodel.Base.metadata
 from qual.core.database import Base  # noqa
 from qual.core.xyapi import auto_discover  # noqa
-import qual  # noqa
 
 # 自动发现导入项目中 `model` 开头的模块
-auto_discover(qual, "model")
+auto_discover("qual", "model")
 
 target_metadata = Base.metadata
 

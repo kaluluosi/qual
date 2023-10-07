@@ -12,6 +12,6 @@ class User(Base, TimeStampMixin):
     password: Mapped[str] = mapped_column(comment="二进制哈希密码")
     display_name: Mapped[str] = mapped_column(index=True, comment="显示名")
     mail: Mapped[str] = mapped_column(nullable=True, comment="邮箱")
-    account_type: Mapped[AccountType] = mapped_column(
+    account_type: Mapped[str] = mapped_column(
         nullable=False, default=AccountType.local, comment="账户类型"
     )
