@@ -7,6 +7,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 logger = logging.getLogger(__name__)
 
+# 引擎的初始化在这里
 engine = create_engine(settings.DB_DSN, echo=settings.DEBUG)
 init_engine(engine)
 
