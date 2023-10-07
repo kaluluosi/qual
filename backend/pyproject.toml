@@ -25,6 +25,7 @@ python-jose = "^3.3.0"
 pydantic = { extras = ["email"], version = "^2.3.0" }
 psycopg2 = "^2.9.7"
 click = "^8.1.7"
+sqlalchemy-utils = "^0.41.1"
 
 [tool.black]
 line-length = 88
@@ -33,7 +34,7 @@ line-length = 88
 ignore = ['E501']
 
 [tool.poetry.scripts]
-xyapi = "qual.core.xyapi.cli:main"
+qual = "qual.cli:main"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"

@@ -43,9 +43,14 @@ class DAO:
         stmt = select(User).offset(offset).limit(limit)
         return self.session.scalars(stmt)
 
-    def create(self, user_c: UserCreate) -> User:
+    def first_or_create(self, user_c: UserCreate) -> User:
+        user = self.get_by_username(user_c.username)
+        if user:
+            return user
+
         if user_c.password:
             user_c.password = hash_password(user_c.password)
+
         user = User(**user_c.model_dump())
         self.session.add(user)
         self.session.flush()

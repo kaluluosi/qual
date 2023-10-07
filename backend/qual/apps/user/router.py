@@ -68,7 +68,7 @@ async def sign_in(user_c: UserCreate, user_dao: UserDAO_ADP):
     if user:
         raise ExistedError(detail=f"用户名 {user_c.username} 已经存在")
     user_c.account_type = AccountType.local
-    user_dao.create(user_c)
+    user_dao.first_or_create(user_c)
 
 
 @api.get("", response_model=list[UserRead])

@@ -1,3 +1,8 @@
+"""
+这个模块只负责创建和组装app，不运行。
+
+"""
+
 import qual.apps
 from qual.core import xyapi
 from fastapi import FastAPI

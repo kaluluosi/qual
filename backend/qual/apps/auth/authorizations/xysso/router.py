@@ -182,7 +182,7 @@ async def token(
             mail=user_info.mail[0],
             account_type=AccountType.xysso,
         )
-        user_dao.create(user_c)
+        user_dao.first_or_create(user_c)
         logger.info(f"初次创建xysso用户 {user_c.username}")
 
     # XXX: 因为XYSSO的一些不规范实现，导致OpenAPI的Scope没有被传递到`oauth2-redirect`页面，因此`form.scope`是空的。
