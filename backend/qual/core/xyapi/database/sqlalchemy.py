@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy import Engine
 from contextvars import ContextVar
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +64,10 @@ def create_session():
         Session: 会话
     """
 
+    yield _create_session()
+
+
+def _create_session():
     engine = _engine_var.get()
     if engine is None:
         raise RuntimeError("没有初始化引擎，请用 `create_engine` 创建一个引擎，然后调用 `init_engine` 设置。")
@@ -76,10 +80,15 @@ def create_session():
 
 
 EngineADP = Annotated[Engine, Depends(_engine_var.get, use_cache=True)]
-SessionADP = Annotated[Session, Depends(create_session, use_cache=True)]
+SessionADP = Annotated[Session, Depends(_create_session, use_cache=True)]
 
 
+@asynccontextmanager
 async def create_async_session():
+    yield _create_async_session()
+
+
+async def _create_async_session():
     """
     创建异步会话
 
@@ -114,4 +123,6 @@ async def create_async_session():
 
 
 AsyncEngineADP = Annotated[Engine, Depends(_async_engine_var.get, use_cache=True)]
-AsyncSessionADP = Annotated[AsyncSession, Depends(create_async_session, use_cache=True)]
+AsyncSessionADP = Annotated[
+    AsyncSession, Depends(_create_async_session, use_cache=True)
+]
