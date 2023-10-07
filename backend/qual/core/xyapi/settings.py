@@ -30,6 +30,8 @@ class BaseSettings(Base):
     HOST: str = Field(default="127.0.0.1", description="绑定IP")
     PORT: int = Field(default=8000, description="端口")
 
+    DB_DSN: str = "sqlite:///.db.sqlite"
+
     # JWT令牌相关
     JWT_SECRET: str = Field(default="jwt_secret", description="密文")
     JWT_ALGORITHM: str = Field(default="HS256", description="算法")
