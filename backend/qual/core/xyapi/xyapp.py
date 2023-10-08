@@ -11,8 +11,6 @@ logger = logging.getLogger(__name__)
 InstallFunction = Callable[[FastAPI], None]
 
 _modules = dict[str, InstallFunction]()
-_initializers = dict[str, Callable]()
-_depends: dict[Callable, Callable] = {}
 
 
 class _PackageMetadata(BaseModel):
@@ -76,9 +74,6 @@ def init(app: FastAPI, package: ModuleType):
         logger.debug(f"执行安装app：{name}.{installer.__qualname__}")
         installer(app)
 
-    # 更新依赖注入
-    app.dependency_overrides.update(_depends)
-
     return app
 
 
@@ -93,33 +88,3 @@ def installer(name: str):
         _modules[name] = func
 
     return _wrapper
-
-
-def initializer(name: str):
-    """
-    注册模块初始化，这个函数是用在CLI初始化项目用的。
-    一般用于数据库添加初始数据。
-
-    @initializer(__name__)
-    def initialize():
-        with Session() as session:
-            with session.begin():
-                user = User(**...)
-
-    """
-
-    def _wrapper(func: Callable):
-        logger.debug(f"初始化模块:{name}.{func.__qualname__}")
-        _initializers[name] = func
-
-    return _wrapper
-
-
-def dependency(depend: Callable, override: Callable):
-    """注册依赖注入
-
-    Args:
-        depend (Callable): 抽象依赖类
-        override (Callable): 具体依赖类
-    """
-    _depends[depend] = override

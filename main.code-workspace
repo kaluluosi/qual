@@ -21,7 +21,8 @@
             "editor.defaultFormatter": "ms-python.black-formatter"
         },
         "python.formatting.provider": "none",
-        "pasteImage.path": "${currentFileDir}/assets"
+        "pasteImage.path": "${currentFileDir}/assets",
+        "files.eol": "\n"
     },
     "extensions": {
         "recommendations": [

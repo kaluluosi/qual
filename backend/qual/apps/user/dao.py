@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from qual.core.xyapi.database.sqlalchemy import SessionADP
 from qual.core.xyapi.security import hash_password
 from typing import Annotated
@@ -13,7 +13,16 @@ class DAO:
         DOA是一个依赖项，`session` 是作为依赖在控制器里传入。当控制器执行结束的时候
         `session`会自动`commit`。
 
-        缺点是这是个依赖项，无法独立与请求执行。
+        用例：
+        ```python
+        with create_session() as session:
+            dao = DAO(session) # 手动传入 `session`
+
+            dao.first_or_create(
+                UserCreate(username="admin", display_name="admin", password="admin")
+            )
+
+        ```
 
         Args:
             session (AsyncSessionADP): 会话依赖项
@@ -44,12 +53,44 @@ class DAO:
         return self.session.scalars(stmt)
 
     def create(self, user_c: UserCreate) -> User:
+        """
+        创建一个用户
+
+        如果用户名已存在会抛出异常，创建失败。
+
+        Args:
+            user_c (UserCreate): 用户schema
+
+        Returns:
+            User: 返回创建的用户
+        """
+
         if user_c.password:
             user_c.password = hash_password(user_c.password)
+
         user = User(**user_c.model_dump())
         self.session.add(user)
         self.session.flush()
         return user
+
+    def first_or_create(self, user_c: UserCreate) -> User:
+        """
+        找到或创建用户
+
+        如果用户名存在就返回，如果不存在就创建一个。
+
+
+        Args:
+            user_c (UserCreate): 用户schema
+
+        Returns:
+            User: 用户
+        """
+        user = self.get_by_username(user_c.username)
+        if user:
+            return user
+
+        return self.create(user_c)
 
     def update_password(self, user: User, password: str):
         user.password = hash_password(password)
@@ -58,6 +99,8 @@ class DAO:
         update_data = user_u.model_dump(exclude_unset=True)
         for k, v in update_data.items():
             setattr(user, k, v)
+        self.session.flush()
+        return user
 
     def is_valid(self, username: str):
         user = self.get_by_username(username)
@@ -68,6 +111,15 @@ class DAO:
         # 这部分逻辑暂时没有留空，以后补充。
 
         return True
+
+    def delete_by_username(self, username: str):
+        user = self.get_by_username(username)
+        if user:
+            self.session.delete(user)
+
+    def delete_by_id(self, id: int):
+        user = self.get_by_id(id)
+        self.session.delete(user)
 
 
 UserDAO_ADP = Annotated[DAO, Depends(DAO)]

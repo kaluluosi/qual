@@ -6,7 +6,9 @@ from sqlalchemy import pool
 from alembic import context
 
 # 导入项目的配置文件
-from qual.core.settings import settings
+from qual.core.xyapi.settings import BaseSettings
+
+settings = BaseSettings()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -19,6 +21,7 @@ if config.config_file_name is not None:
 
 # 通过settings覆盖sqlalchemy.url
 section = config.config_ini_section
+print("section name", section)
 config.set_section_option(section, "sqlalchemy.url", settings.DB_DSN)
 
 # add your model's MetaData object here
@@ -27,10 +30,10 @@ config.set_section_option(section, "sqlalchemy.url", settings.DB_DSN)
 # target_metadata = mymodel.Base.metadata
 from qual.core.database import Base  # noqa
 from qual.core.xyapi import auto_discover  # noqa
-import qual  # noqa
 
 # 自动发现导入项目中 `model` 开头的模块
-auto_discover(qual, "model")
+auto_discover("qual", "model")
+
 
 target_metadata = Base.metadata
 
@@ -58,6 +61,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        version_table="qual_alembic_version",
     )
 
     with context.begin_transaction():
@@ -78,7 +82,10 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+        )
 
         with context.begin_transaction():
             context.run_migrations()

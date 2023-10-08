@@ -22,15 +22,20 @@ passlib = "^1.7.4"
 fastapi-sso = "^0.7.2"
 python-multipart = "^0.0.6"
 python-jose = "^3.3.0"
-pydantic = {extras = ["email"], version = "^2.3.0"}
+pydantic = { extras = ["email"], version = "^2.3.0" }
 psycopg2 = "^2.9.7"
 casbin = "^1.31.0"
+click = "^8.1.7"
+sqlalchemy-utils = "^0.41.1"
 
 [tool.black]
 line-length = 88
 
 [tool.ruff]
 ignore = ['E501']
+
+[tool.poetry.scripts]
+qual = "qual.cli:main"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"

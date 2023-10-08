@@ -4,7 +4,7 @@ xyapi这个模块是负责提供以下功能:
 
 """
 
-from .xyapp import init, installer, initializer, FastAPI
+from .xyapp import init, installer, FastAPI
 from .auto_discover import auto_discover
 from .settings import BaseSettings
 from .exception import (
@@ -19,7 +19,6 @@ __all__ = [
     "init",
     "installer",
     "auto_discover",
-    "initializer",
     "FastAPI",
     "BaseSettings",
     "HttpExceptionModel",

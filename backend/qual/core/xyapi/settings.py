@@ -26,9 +26,11 @@ class BaseSettings(Base):
     """
 
     ENVIRONMENT: str | Literal["dev", "prod"] = Field(default="dev", description="环境")
-    DEBUG: bool = Field(default=True, description="调试模式，主要影响日志、FastApi、数据库打印")
+    DEBUG: bool = Field(default=False, description="调试模式，主要影响日志、FastApi、数据库打印")
     HOST: str = Field(default="127.0.0.1", description="绑定IP")
     PORT: int = Field(default=8000, description="端口")
+
+    DB_DSN: str = "sqlite:///.db.sqlite"
 
     # JWT令牌相关
     JWT_SECRET: str = Field(default="jwt_secret", description="密文")

@@ -182,7 +182,7 @@ async def token(
             mail=user_info.mail[0],
             account_type=AccountType.xysso,
         )
-        user_dao.create(user_c)
+        user_dao.first_or_create(user_c)
         logger.info(f"初次创建xysso用户 {user_c.username}")
 
     # XXX: 因为XYSSO的一些不规范实现，导致OpenAPI的Scope没有被传递到`oauth2-redirect`页面，因此`form.scope`是空的。
@@ -212,7 +212,7 @@ client_secret:  {auth_settings.XYSSO_CLIENT_SECRET}
 xysso_bearer = OAuth2AuthorizationCodeBearer(
     authorizationUrl=auth_settings.XYSSO_AUTHORIZE_ENDPOINT,
     tokenUrl=api.url_path_for("token"),
-    # refreshUrl=api.url_path_for("sso_refresh_token"), # OpenAPI的token刷新完全是废的，所以设置了
+    # refreshUrl=api.url_path_for("sso_refresh_token"), # XXX: OpenAPI的token刷新完全是废的，不知道怎么用，注释了
     scheme_name="XYSSO-心源单点登录",
     description=_description,
     scopes=Scope.scopes,
