@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr
+from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr, Field
 from .constant import AccountType
 
 
@@ -18,7 +18,7 @@ class UserCreate(BaseModel):
     display_name: str
     password: str
     mail: EmailStr | None = None
-    account_type: AccountType | None = AccountType.local
+    account_type: AccountType | None = Field(default=AccountType.local)
 
     model_config = ConfigDict(from_attributes=True)
 
