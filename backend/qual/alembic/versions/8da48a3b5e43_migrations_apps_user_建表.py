@@ -1,8 +1,8 @@
-"""创建用户表
+"""migrations apps user 建表
 
-Revision ID: a825378316b0
+Revision ID: 8da48a3b5e43
 Revises: 
-Create Date: 2023-10-07 07:59:28.473952
+Create Date: 2023-10-08 08:24:47.374159
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a825378316b0'
+revision: str = '8da48a3b5e43'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

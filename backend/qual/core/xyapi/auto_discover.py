@@ -8,7 +8,7 @@ import logging
 from glob import glob
 from pathlib import Path
 from types import ModuleType
-from importlib import import_module
+from importlib import import_module, util
 
 logger = logging.getLogger(__package__)
 
@@ -128,3 +128,37 @@ def auto_discover(module: ModuleType | str, pattern: str = "*"):
         modules[module_path] = module
 
     return modules
+
+
+def auto_descover_by_dirpath(path: str, pattern: str = "*"):
+    """
+    通过模块路径来自动发现
+
+    Args:
+        path (str): 模块路径（如果是文件夹模块那么必须有 __init__.py )
+        pattern (str, optional): 通配符. Defaults to "*".
+
+    Raises:
+        RuntimeError: 模块不合法时抛出
+    """
+
+    # FIXME: glob有个问题 `/**/*` 匹配只能匹配出子目录，无法匹配根目录文件。
+    # 现在只能够再做一个 `root_files` 的匹配把根目录文件匹出来。
+    # 不知道有没有更好的方法，有的话改掉。
+    file_pattern = f"{pattern}.py"
+    pattern = os.path.join("**", "*", file_pattern)
+
+    files = glob(pattern, root_dir=path, recursive=True)
+
+    # HACK: 因此在这里要多做一次根目录文件的匹配
+    root_files = glob(file_pattern, root_dir=path, recursive=True)
+    files.extend(root_files)
+
+    for file in files:
+        print(file)
+        name = os.path.splitext(file)[0]
+        spec = util.spec_from_file_location(name, os.path.join(path, file))
+        if spec:
+            module = util.module_from_spec(spec)
+            if spec.loader:
+                spec.loader.exec_module(module)

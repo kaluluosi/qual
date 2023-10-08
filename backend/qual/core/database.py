@@ -36,7 +36,3 @@ class TimeStampMixin:
     updated_at: Mapped[datetime] = mapped_column(
         default=datetime.utcnow, onupdate=datetime.utcnow, comment="更新时间"
     )
-
-
-class SoftDeleteMixin:
-    deleted_at: Mapped[datetime] = mapped_column(comment="删除时间")

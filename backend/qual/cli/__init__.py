@@ -5,7 +5,6 @@
 import click
 from sqlalchemy_utils import database_exists, create_database, drop_database
 from qual.core.database import engine  # <- 因为这里导入了所以引擎初始化了， XXX：cli无法剥离因为这里耦合了
-from qual.core.xyapi.auto_discover import auto_discover
 from alembic.config import main as alembic_main
 
 
@@ -41,16 +40,3 @@ def install(reinstall: bool):
 
     click.echo("开始Alembic迁移")
     alembic_main(["upgrade", "head"])
-
-    # TODO: 自动发现所有 seeder 模块，然后执行 seeder
-    # XXX: `seeder` 种子数据在 `ruby on rails` 中是很重要的一个功能，因为后端项目
-    # 运行还依赖了大量的数据库初始数据，需要一个工具来发现和执行填充种子数据。
-    auto_discover("qual", "__seed__")
-
-
-@main.command
-def seed():
-    """
-    填充种子数据（数据库初始数据）
-    """
-    auto_discover("qual", "__seed__")

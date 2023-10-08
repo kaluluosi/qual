@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from qual.core.xyapi.database.sqlalchemy import SessionADP
 from qual.core.xyapi.security import hash_password
 from typing import Annotated
@@ -111,6 +111,15 @@ class DAO:
         # 这部分逻辑暂时没有留空，以后补充。
 
         return True
+
+    def delete_by_username(self, username: str):
+        user = self.get_by_username(username)
+        if user:
+            self.session.delete(user)
+
+    def delete_by_id(self, id: int):
+        user = self.get_by_id(id)
+        self.session.delete(user)
 
 
 UserDAO_ADP = Annotated[DAO, Depends(DAO)]
