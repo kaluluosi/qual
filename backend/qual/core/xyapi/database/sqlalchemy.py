@@ -9,6 +9,7 @@ from contextlib import contextmanager, asynccontextmanager
 
 logger = logging.getLogger(__name__)
 
+# XXX:这样写导致这个包只支持单数据库，以后有需要再想怎么改了。
 _engine_var = ContextVar[Engine]("engine")
 _async_engine_var = ContextVar[AsyncEngine]("async_engine")
 
