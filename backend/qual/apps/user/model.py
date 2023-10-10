@@ -3,7 +3,7 @@ from qual.core.database import Base, TimeStampMixin, Mapped, mapped_column
 
 
 class User(Base, TimeStampMixin):
-    __tablename__ = "users"
+    __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(
         primary_key=True, autoincrement=True, comment="用户编号"
