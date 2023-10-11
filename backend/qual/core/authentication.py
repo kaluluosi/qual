@@ -1,15 +1,14 @@
 from typing import Annotated
 from fastapi import Depends
-from qual.apps.user.dao import UserDAO_ADP
 from qual.apps.user.model import User
 from qual.apps.auth.authorizations.xysso.router import xysso_bearer
 from qual.apps.auth.authorizations.oauth2password.router import oauth2_password_bearer
 from qual.core.xyapi.security import AccessTokenPayloadADP
+from qual.apps.user.model import User
 
 
 def authenticate(
     token: AccessTokenPayloadADP,
-    user_dao: UserDAO_ADP,
     _1=Depends(xysso_bearer),
     _2=Depends(oauth2_password_bearer),
 ):
@@ -28,7 +27,7 @@ def authenticate(
     Returns:
         _type_: _description_
     """
-    user = user_dao.get_by_username(token.sub)
+    user = User.scalar(User.select.where(User.username == token.sub))
     return user
 
 

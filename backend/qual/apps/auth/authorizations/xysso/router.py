@@ -1,6 +1,5 @@
 import base64
 import logging
-import secrets
 from typing import Annotated, cast
 from urllib.parse import urlencode
 
@@ -8,8 +7,7 @@ import httpx
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2AuthorizationCodeBearer
 
-from qual.apps.user.constant import AccountType
-from qual.apps.user.dao import UserDAO_ADP
+from qual.apps.user.model import User, AccountType
 from qual.apps.user.schema import UserCreate
 from qual.core.xyapi.exception import HttpExceptionModel
 from qual.core.xyapi.security import Scope, TokenADP, TokenData
@@ -125,9 +123,7 @@ async def sso_url(redirect_uri: str | None = ""):
         }
     },
 )
-async def token(
-    form: Annotated[OAuth2AuthorizationCodeForm, Depends()], user_dao: UserDAO_ADP
-):
+async def token(form: Annotated[OAuth2AuthorizationCodeForm, Depends()]):
     """
     这个令牌接口是直接用授权码获取了Token。
 
@@ -169,21 +165,19 @@ async def token(
 
     # TODO: 检查数据库里有没有这个用户，没有就创建用户
     # XXX: 这里不可避免的要跟具体的创建用户耦合。到底要不要后端这个接口一条龙的创建用户呢？
-    user = user_dao.get_by_username(xy_resp.username)
+    user = User.get_by_username(xy_resp.username)
     if not user:
         user_info = list(xy_resp.user.values())[0]
         user_info = cast(UserInfo, user_info)
-        user_c = UserCreate(
+
+        user = User(
             username=xy_resp.username,
             display_name=user_info.name[0],
-            # XXX: 我认为这里应该随机生成一个密码，以免以后有什么漏洞导致可以用户名密码的方式访问到这个用户
-            # 比如哪天哪个登录方式忘记判断account_type，空密码或者简单密码给撞到了sso的账户。
-            password=secrets.token_urlsafe(),  # 暂时用secrets标准库生成一个随机密码
             mail=user_info.mail[0],
             account_type=AccountType.xysso,
         )
-        user_dao.first_or_create(user_c)
-        logger.info(f"初次创建xysso用户 {user_c.username}")
+        user.save()
+        logger.info(f"初次创建xysso用户 {user.username}")
 
     # XXX: 因为XYSSO的一些不规范实现，导致OpenAPI的Scope没有被传递到`oauth2-redirect`页面，因此`form.scope`是空的。
     # 为了避免`OpenAPI`页面创建的Token没有Scope，默认给他一个 `Scope.all` 全能范围。

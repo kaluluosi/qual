@@ -3,6 +3,7 @@
 """
 import fnmatch
 import os
+import sys
 import pkg_resources
 import logging
 from glob import glob
@@ -123,9 +124,10 @@ def auto_discover(module: ModuleType | str, pattern: str = "*"):
 
     modules: dict[str, ModuleType] = {}
     for module_path in module_paths:
-        module = import_module(module_path)
-        logger.info(f"自动发现: {module_path}")
-        modules[module_path] = module
+        if module_path not in sys.modules:
+            module = import_module(module_path)
+            logger.info(f"自动发现: {module_path}")
+            modules[module_path] = module
 
     return modules
 

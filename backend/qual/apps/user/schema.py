@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr, Field
-from .constant import AccountType
+from .model import AccountType
 
 
 class UserRead(BaseModel):

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException, status
 from qual.core.xyapi.security import RefreshTokenPayloadADP, TokenData
-from qual.apps.user.dao import UserDAO_ADP
+from qual.apps.user.model import User
 
 api = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @api.post("/refresh_token", response_model=TokenData)
-async def refresh_token(payload: RefreshTokenPayloadADP, user_dao: UserDAO_ADP):
+async def refresh_token(payload: RefreshTokenPayloadADP):
     """
     刷新令牌接口
 
@@ -18,7 +18,7 @@ async def refresh_token(payload: RefreshTokenPayloadADP, user_dao: UserDAO_ADP):
     """
     username = payload.sub
 
-    if not user_dao.is_valid(username):
+    if not User.get_by_username(username):
         # 如果用户无效就返回失败
         return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="用户已经无效")
 

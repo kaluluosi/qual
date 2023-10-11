@@ -3,8 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from qual.core.xyapi.exception import HttpExceptionModel
 from qual.core.xyapi.security import TokenADP, TokenData, verify_password
-from qual.apps.user.constant import AccountType
-from qual.apps.user.dao import UserDAO_ADP
+from qual.apps.user.model import User, AccountType
 
 api = APIRouter(prefix="/oath2password", tags=["oath2password"])
 
@@ -23,9 +22,7 @@ api = APIRouter(prefix="/oath2password", tags=["oath2password"])
         },
     },
 )
-async def token(
-    form: Annotated[OAuth2PasswordRequestForm, Depends()], user_dao: UserDAO_ADP
-):
+async def token(form: Annotated[OAuth2PasswordRequestForm, Depends()]):
     """
     认证并获取token
 
@@ -45,7 +42,7 @@ async def token(
     # github、google那样搞大OAuth2开放平台。
 
     # XXX: 这一段代码就是具体的认证流程逻辑已经粘死这里了
-    user = user_dao.get_by_username(username=form.username)
+    user = User.get_by_username(username=form.username)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="用户不存在")
     elif user.account_type != AccountType.local:  # password模式只认local类型账户
