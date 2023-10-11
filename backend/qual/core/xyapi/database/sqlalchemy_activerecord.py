@@ -72,6 +72,7 @@ class ActiveRecordMixin:
         if begin:
             with session.begin():
                 yield session
+                print("提交")
         else:
             yield session
         cls._session_var.reset(token)
@@ -90,6 +91,10 @@ class ActiveRecordMixin:
         return cls.session.scalars(stmt)
 
     @classmethod
+    def query(cls, stmt: Any):
+        return cls.session.query(stmt)
+
+    @classmethod
     def get_by_pk(cls, primary_key: Any) -> Self | None:
         """
         通过主键获取
@@ -102,9 +107,10 @@ class ActiveRecordMixin:
         """
         return cls.session.get(cls, primary_key)
 
-    def delete(self):
-        """删除是立即发生的"""
+    def delete(self, commit=True):
         self.session.delete(self)
+        if commit:
+            self.session.commit()
 
     def save(self, commit=True):
         self.session.add(self)
@@ -115,6 +121,11 @@ class ActiveRecordMixin:
         for k, v in kwargs.items():
             setattr(self, k, v)
         self.save()
+
+    @classmethod
+    def is_empty_table(cls):
+        data = cls.scalar(cls.select.where())
+        return data is None
 
 
 class Model(
