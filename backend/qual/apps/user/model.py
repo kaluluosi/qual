@@ -1,10 +1,10 @@
+import secrets
+import uuid
 from typing import Self
 from sqlalchemy.orm import Mapped, mapped_column
 from enum import StrEnum
 from qual.core.database import Model
 from qual.core.xyapi.security import verify_password, hash_password
-import secrets
-import uuid
 
 
 class AccountType(StrEnum):

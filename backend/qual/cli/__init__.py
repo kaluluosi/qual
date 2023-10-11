@@ -6,6 +6,7 @@ import click
 from sqlalchemy_utils import database_exists, create_database, drop_database
 from qual.core.database import engine  # <- 因为这里导入了所以引擎初始化了， XXX：cli无法剥离因为这里耦合了
 from alembic.config import main as alembic_main
+from qual.migrations.seeds import seed as seed_data
 
 
 @click.group
@@ -40,3 +41,11 @@ def install(reinstall: bool):
 
     click.echo("开始Alembic迁移")
     alembic_main(["upgrade", "head"])
+
+
+@main.command
+def seed():
+    """
+    填充初始数据
+    """
+    seed_data()
