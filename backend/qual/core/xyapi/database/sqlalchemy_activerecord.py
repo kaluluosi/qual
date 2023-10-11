@@ -1,13 +1,25 @@
 from contextvars import ContextVar
 from contextlib import contextmanager
-from typing import Any, Literal, Optional, Union
-from sqlalchemy.orm import Session,DeclarativeBase,Mapped,mapped_column
-from sqlalchemy import Connection, MetaData, create_engine,Engine,select
+from typing import Any
+from sqlalchemy.orm import Session,DeclarativeBase,declared_attr,MappedAsDataclass,Mapped,mapped_column
+from sqlalchemy import Engine,select
 
-class _Mixin:
+class AutoTableNameMixin:
+    """
+    自动用类名的小写形式做表名
+    """
+    
+    @declared_attr.directive
+    @classmethod
+    def __tablename__(cls)->str:
+        return cls.__name__.lower()
+    
+
+class ActiveRecordMixin:
     
     _engine_var = ContextVar[Engine]("engine_var")
     _session_var = ContextVar[Session]("session_var")
+    
 
     @classmethod
     @property
@@ -70,54 +82,31 @@ class _Mixin:
         if commit:
             self.session.commit()
 
+
+
         
-class Model(DeclarativeBase,_Mixin):
+class Model(DeclarativeBase,ActiveRecordMixin,MappedAsDataclass):
+    """
+    模型基类
+    
+    用例：
+    ```python
+    # 单数据库直接继承即可
+    
+    class User(Model):
+        id:Mapped[int] = mapped_column(primary_key=True)
+    
+    
+    # 多数据库你需要派生一个抽象Model
+    class DB1_Model(Model):
+        __abstract__ = True
+        metadata = MetaData() # 这里创建DB1_Model自己的metadata对象，这样才不会跟基类Model的metadata混淆
+        
+    ```
+
+    Args:
+        DeclarativeBase (_type_): _description_
+        _Mixin (_type_): _description_
+    """
     ...
     
-
-class AModel(Model):
-    __abstract__ = True
-    metadata = MetaData()
-
-
-class User(AModel):
-    __tablename__ = "users"
-    id:Mapped[int] = mapped_column(primary_key=True)
-    name:Mapped[str] = mapped_column(nullable=False)
-    email:Mapped[str] = mapped_column(nullable=False)
-    
-    def __repr__(self):
-        return f"<User(id={self.id}, name={self.name}, email={self.email})>"
-    
-engine = create_engine("sqlite:///:memory:", echo=True)
-AModel.bind(engine)
-AModel.metadata.create_all(engine)
-
-
-with User.start_session(True) as session:
-    user = User(name="John", email="john@example.com")
-    user.save()
-    
-    
-with User.start_session(True) as session:
-    users = User.scalars(User.select.where())
-    print(users)
-    
-tom = User(name="Tom", email="tom@example.com")
-marry = User(name="Marry", email="Marry@example.com")
-
-tom.save()
-marry.save()
-
-User.session.commit()
-
-
-users = User.session.scalars(User.select.where()).all()
-
-print(users)
-
-tom.delete()
-
-users = User.session.scalars(User.select.where()).all()
-
-print(users)
