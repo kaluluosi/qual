@@ -1,6 +1,6 @@
 import typing
 
-from qual.core.database import Model
+from qual.core.database import Model, OrderMixin, KeyMixin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
 
@@ -8,13 +8,8 @@ if typing.TYPE_CHECKING:
     from qual.apps.user.model import User
 
 
-class Department(Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    key: Mapped[str] = mapped_column(nullable=True, comment="部门标识")
-
-    sort: Mapped[int] = mapped_column(default=1, comment="排序编号")
-
-    owenr: Mapped[User] = mapped_column(nullable=True, comment="负责人")
+class Department(Model, OrderMixin, KeyMixin):
+    owner: Mapped[User] = mapped_column(nullable=True, comment="负责人")
     actived: Mapped[bool] = mapped_column(default=True, comment="是否激活状态")
 
     # foreign key
@@ -33,4 +28,4 @@ class Department(Model):
 
 class UserDepartmentAssociation(Model):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), primary_key=True)
-    department_id: Mapped[int] = mapped_column(ForeignKey(Department.id))
+    department_id: Mapped[int] = mapped_column(ForeignKey(Department.key))

@@ -47,6 +47,13 @@ class ActiveRecordMixin:
     @classmethod
     @property
     def session(cls) -> Session:
+        """
+        会尝试从上下文中获取session，如果上下文没有session，
+        那么就自己创建一个。
+
+        Returns:
+            Session: _description_
+        """
         try:
             return cls._session_var.get()
         except LookupError:

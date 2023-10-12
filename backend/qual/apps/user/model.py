@@ -13,9 +13,6 @@ class AccountType(StrEnum):
 
 
 class User(Model):
-    id: Mapped[int] = mapped_column(
-        primary_key=True, autoincrement=True, comment="用户编号"
-    )
     username: Mapped[str] = mapped_column(unique=True, index=True, comment="用户名")
     mail: Mapped[str] = mapped_column(default=None, nullable=True, comment="邮箱")
     password: Mapped[str] = mapped_column(
