@@ -1,4 +1,5 @@
 from enum import IntEnum
+from qual.apps.user.model import User
 from qual.core.database import Model, KeyMixin, OrderMixin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
@@ -26,6 +27,11 @@ class Role(Model, KeyMixin, OrderMixin):
     )
 
     comment: Mapped[str] = mapped_column(nullable=True, comment="备注")
+
+    # relationship
+    members: Mapped[list[User]] = relationship(
+        secondary="userroleassociation", backref="roles"
+    )
 
 
 class Permission(Model, OrderMixin):
@@ -88,4 +94,5 @@ class Menu(Model, OrderMixin):
 
 
 class UserRoleAssociation(Model):
-    ...
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id), comment="用户id")
+    role_id: Mapped[int] = mapped_column(ForeignKey(Role.id), comment="角色id")
