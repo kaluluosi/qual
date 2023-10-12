@@ -4,9 +4,9 @@
 
 import click
 from sqlalchemy_utils import database_exists, create_database, drop_database
-from qual.core.database import engine  # <- 因为这里导入了所以引擎初始化了， XXX：cli无法剥离因为这里耦合了
 from alembic.config import main as alembic_main
 from qual.migrations.seeds import seed as seed_data
+from qual.core.settings import settings
 
 
 @click.group
@@ -24,19 +24,19 @@ def install(reinstall: bool):
     安装部署项目
     """
 
-    if database_exists(engine.url):
+    if database_exists(settings.DB_DSN):
         if reinstall:
             answer = click.confirm("[警告]下面将会删除数据库，请确定", default=False)
             if answer is False:
                 return
 
-            drop_database(engine.url)
+            drop_database(settings.DB_DSN)
             click.echo("清档/删除数据库完毕")
         else:
             click.echo("数据库已经存在，项目已经安装过，终止。")
             return
 
-    create_database(engine.url)
+    create_database(settings.DB_DSN)
     click.echo("数据库创建完毕")
 
     click.echo("开始Alembic迁移")

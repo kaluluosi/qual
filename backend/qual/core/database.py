@@ -7,6 +7,9 @@ logger = logging.getLogger(__name__)
 
 
 class Model(BaseModel):
+    __abstract__ = True
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, comment="主键")
+
     ...
 
 
@@ -24,5 +27,5 @@ class KeyMixin:
     """
 
     key: Mapped[str] = mapped_column(
-        primary_key=True, unique=True, index=True, nullable=True, comment="索引key"
+        unique=True, index=True, nullable=True, comment="索引key"
     )
