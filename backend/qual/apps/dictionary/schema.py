@@ -1,11 +1,11 @@
-from pydantic import BaseModel, ConfigDict
-from .model import Type
+from pydantic import BaseModel, ConfigDict, Field
+from .model import VariantType
 
 
 class DictionaryBase(BaseModel):
     key: str
     name: str
-    type: int = Type.text
+    type: int = VariantType.text
     enable: bool = True
     sort: int = 1
     comment: str = ""
@@ -20,7 +20,7 @@ class DictionaryKeyValueRead(BaseModel):
     id: int
     name: str
     value: str
-    type: int
+    type: int = Field(description="")
     enable: bool
     sort: int
     parent_id: int

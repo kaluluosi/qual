@@ -25,17 +25,14 @@ class AutoTableNameMixin:
 
 
 class AuditMixin:
-    @declared_attr
-    @classmethod
-    def create_at(cls) -> Mapped[datetime]:
-        return mapped_column(default=datetime.utcnow, comment="创建时间")
+    """
+    审计字段
+    """
 
-    @declared_attr
-    @classmethod
-    def updated_at(cls) -> Mapped[datetime]:
-        return mapped_column(
-            default=datetime.utcnow, onupdate=datetime.utcnow, comment="更新时间"
-        )
+    create_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, comment="创建时间")
+    updated_at: Mapped[datetime] = mapped_column(
+        default=datetime.utcnow, onupdate=datetime.utcnow, comment="更新时间"
+    )
 
 
 class ActiveRecordMixin:

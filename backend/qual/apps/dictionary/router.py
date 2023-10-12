@@ -91,10 +91,9 @@ async def get_dict_value(key: str, id: int):
 
 @api.delete("/{key}/values/{id}")
 async def delete_dict_values(key: str, id: int):
-    stmt = (
-        DictionaryKeyValue.select.select_from(Dictionary)
-        .join(DictionaryKeyValue.parent)
-        .where(Dictionary.key == key, DictionaryKeyValue.id == id)
+    stmt = DictionaryKeyValue.select.where(
+        DictionaryKeyValue.parent.has(Dictionary.key == key),
+        DictionaryKeyValue.id == id,
     )
 
     value = DictionaryKeyValue.scalar(stmt)

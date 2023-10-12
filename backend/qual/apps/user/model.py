@@ -1,10 +1,11 @@
 import secrets
 import uuid
 from typing import Self
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import StrEnum
 from qual.core.database import Model
 from qual.core.xyapi.security import verify_password, hash_password
+from qual.apps.department.model import Department, UserDepartmentAssocation
 
 
 class AccountType(StrEnum):
@@ -26,6 +27,12 @@ class User(Model):
     )
     account_type: Mapped[str] = mapped_column(
         nullable=False, default=AccountType.local, comment="账户类型"
+    )
+
+    # relationship
+
+    departments: Mapped[Department] = relationship(
+        secondary=UserDepartmentAssocation.__tablename__
     )
 
     def verify_password(self, password: str) -> bool:

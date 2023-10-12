@@ -4,7 +4,7 @@ from sqlalchemy import ForeignKey
 from enum import IntEnum
 
 
-class Type(IntEnum):
+class VariantType(IntEnum):
     text = 0
     number = 1
     date = 2
@@ -17,9 +17,9 @@ class Type(IntEnum):
 
 class Dictionary(Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    key: Mapped[str] = mapped_column(unique=True, index=True, comment="字典编号")
+    key: Mapped[str] = mapped_column(unique=True, index=True, comment="字典标识")
     name: Mapped[str] = mapped_column(unique=True, comment="字典名")
-    type: Mapped[int] = mapped_column(default=Type.text, comment="值类型")
+    type: Mapped[int] = mapped_column(default=VariantType.text, comment="值类型")
     enable: Mapped[bool] = mapped_column(default=True, comment="启用/禁用")
     sort: Mapped[int] = mapped_column(default=1, comment="排序编号")
     comment: Mapped[str] = mapped_column(default="", comment="备注")
@@ -39,7 +39,7 @@ class DictionaryKeyValue(Model):
     id: Mapped[int] = mapped_column(primary_key=True, comment="键值编号")
     name: Mapped[str] = mapped_column(comment="键名")
     value: Mapped[str] = mapped_column(comment="值")
-    type: Mapped[int] = mapped_column(default=Type.text, comment="值类型")
+    type: Mapped[int] = mapped_column(default=VariantType.text, comment="值类型")
     enable: Mapped[bool] = mapped_column(default=True, comment="启用/禁用")
     sort: Mapped[int] = mapped_column(default=1, comment="排序编号")
     color: Mapped[str] = mapped_column(nullable=True, comment="颜色")
