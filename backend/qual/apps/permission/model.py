@@ -85,3 +85,7 @@ class Menu(Model, OrderMixin):
     )
     # relationship
     permission: Mapped[Permission] = relationship(back_populates="menus")
+
+
+class UserRoleAssociation(Model):
+    ...

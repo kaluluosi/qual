@@ -25,5 +25,5 @@ class Department(Model, OrderMixin, KeyMixin):
 
 
 class UserDepartmentAssociation(Model):
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     department_id: Mapped[int] = mapped_column(ForeignKey(Department.key))

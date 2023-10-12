@@ -34,7 +34,6 @@ class Dictionary(Model, KeyMixin, OrderMixin):
 
 
 class DictionaryKeyValue(Model, OrderMixin):
-    id: Mapped[int] = mapped_column(primary_key=True, comment="键值编号")
     name: Mapped[str] = mapped_column(comment="键名")
     value: Mapped[str] = mapped_column(comment="值")
     type: Mapped[int] = mapped_column(default=VariantType.text, comment="值类型")
@@ -42,7 +41,7 @@ class DictionaryKeyValue(Model, OrderMixin):
     color: Mapped[str] = mapped_column(nullable=True, comment="颜色")
 
     # foreign key
-    parent_id: Mapped[int] = mapped_column(ForeignKey(Dictionary.key))
+    parent_id: Mapped[int] = mapped_column(ForeignKey(Dictionary.id))
 
     # relationship
     parent: Mapped[Dictionary] = relationship(back_populates="children")
