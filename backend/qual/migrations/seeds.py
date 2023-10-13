@@ -58,6 +58,6 @@ def seed_dictionary():
 
 
 def seed():
-    with Model.session.begin():
+    with Model.start_session(True):
         seed_user()
         seed_dictionary()
