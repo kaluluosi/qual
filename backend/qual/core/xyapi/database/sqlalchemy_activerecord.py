@@ -66,22 +66,6 @@ class ActiveRecordMixin:
         cls._engine_var.set(engine)
 
     @classmethod
-    @contextmanager
-    def start_session(cls, begin=False, *args, **kwargs):
-        if cls.engine is None:
-            raise RuntimeError("No engine bound")
-
-        session = Session(cls.engine, *args, **kwargs)
-        token = cls._session_var.set(session)
-        if begin:
-            with session.begin():
-                yield session
-                print("提交")
-        else:
-            yield session
-        cls._session_var.reset(token)
-
-    @classmethod
     @property
     def select(cls):
         return select(cls)
@@ -112,22 +96,43 @@ class ActiveRecordMixin:
         return cls.session.get(cls, primary_key)
 
     def delete(self, commit=True):
+        """
+        删除会用Session.delete对象。
+
+        Args:
+            commit (bool, optional): true就会同时提交，False就需要手动调用session.commit或者用session.begin()包裹. Defaults to True.
+        """
         self.session.delete(self)
-        if commit:
+        if commit and not self.session.get_transaction():
             self.session.commit()
 
     def save(self, commit=True):
+        """
+        保存会用Session.Add添加对象。
+
+        Args:
+            commit (bool, optional): true就会同时提交，False就需要手动调用session.commit或者用session.begin()包裹. Defaults to True.
+        """
         self.session.add(self)
-        if commit:
+        if commit and not self.session.get_transaction():
             self.session.commit()
 
     def update(self, **kwargs):
+        """
+        按关键字参数更新字段
+        """
         for k, v in kwargs.items():
             setattr(self, k, v)
         self.save()
 
     @classmethod
     def is_empty_table(cls):
+        """
+        判断表是不是空的
+
+        Returns:
+            bool: 布尔
+        """
         data = cls.scalar(cls.select.where())
         return data is None
 
