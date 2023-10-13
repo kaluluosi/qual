@@ -1,5 +1,7 @@
 import logging
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Mapped, mapped_column
+from qual.core.settings import settings
 from qual.core.xyapi.database.sqlalchemy_activerecord import Model as BaseModel
 
 
@@ -29,3 +31,7 @@ class KeyMixin:
     key: Mapped[str] = mapped_column(
         unique=True, index=True, nullable=True, comment="索引key"
     )
+
+
+engine = create_engine(settings.DB_DSN, echo=settings.DEBUG)
+BaseModel.bind(engine)
