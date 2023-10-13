@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Body, HTTPException, status, Request
+from fastapi import APIRouter, Body, HTTPException, status
 from qual.core.xyapi import ExistedError
 from qual.core.xyapi.exception import NotFoundError
 from qual.core.xyapi.security import verify_password
@@ -75,8 +75,3 @@ async def sign_in(user_c: UserCreate):
     user = User(**user_c.model_dump())
     user.set_password(user_c.password)
     user.save()
-
-
-@api.get("/test")
-def test(request: Request):
-    print(request.url)

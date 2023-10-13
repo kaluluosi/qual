@@ -36,30 +36,40 @@ class AuditMixin:
 
 
 class ActiveRecordMixin:
-    _engine_var = ContextVar[Engine]("engine_var")
-    _session_var = ContextVar[Session]("session_var")
+    _engine_var = ContextVar[Engine | None]("engine_var", default=None)
+    _session_var = ContextVar[Session | None]("session_var", default=None)
 
     @classmethod
     @property
-    def engine(cls) -> Engine:
+    def engine(cls) -> Engine | None:
         return cls._engine_var.get()
 
     @classmethod
     @property
-    def session(cls) -> Session:
+    def session(cls) -> Session | None:
         """
-        会尝试从上下文中获取session，如果上下文没有session，
-        那么就自己创建一个。
+        会尝试从上下文中获取session
 
         Returns:
             Session: _description_
         """
-        try:
-            return cls._session_var.get()
-        except LookupError:
-            session = Session(cls.engine)
-            cls._session_var.set(session)
-            return session
+        return cls._session_var.get()
+
+    @contextmanager
+    @classmethod
+    def start_session(cls, begin=True, *args, **kwargs):
+        if cls.engine is None:
+            raise RuntimeError("No engine bound")
+
+        session = Session(cls.engine, *args, **kwargs)
+        token = cls._session_var.set(session)
+        if begin:
+            with session.begin():
+                yield session
+        else:
+            yield session
+        # 重置掉（删掉）
+        cls._session_var.reset(token)
 
     @classmethod
     def bind(cls, engine: Engine):
@@ -72,15 +82,27 @@ class ActiveRecordMixin:
 
     @classmethod
     def scalar(cls, stmt: Any) -> Self | None:
-        return cls.session.scalar(stmt)
+        if cls.session:
+            return cls.session.scalar(stmt)
+        else:
+            session = Session(cls.engine)
+            return session.scalar(stmt)
 
     @classmethod
     def scalars(cls, stmt: Any) -> ScalarResult[Self]:
-        return cls.session.scalars(stmt)
+        if cls.session:
+            return cls.session.scalars(stmt)
+        else:
+            session = Session(cls.engine)
+            return session.scalars(stmt)
 
     @classmethod
     def query(cls, stmt: Any):
-        return cls.session.query(stmt)
+        if cls.session:
+            return cls.session.query(stmt)
+        else:
+            session = Session(cls.engine)
+            return session.query(stmt)
 
     @classmethod
     def get_by_pk(cls, primary_key: Any) -> Self | None:
@@ -95,27 +117,40 @@ class ActiveRecordMixin:
         """
         return cls.session.get(cls, primary_key)
 
-    def delete(self, commit=True):
+    def delete(self):
         """
         删除会用Session.delete对象。
 
         Args:
             commit (bool, optional): true就会同时提交，False就需要手动调用session.commit或者用session.begin()包裹. Defaults to True.
         """
-        self.session.delete(self)
-        if commit and not self.session.get_transaction():
-            self.session.commit()
+        if not self.session:
+            # 没有包在上层session里
+            session = Session(self.engine)
+            session.delete(self)
+            session.commit()
+        else:
+            # 有上下文session
+            # 只加不提交
+            self.session.delete(self)
 
-    def save(self, commit=True):
+    def save(self):
         """
         保存会用Session.Add添加对象。
 
         Args:
             commit (bool, optional): true就会同时提交，False就需要手动调用session.commit或者用session.begin()包裹. Defaults to True.
         """
-        self.session.add(self)
-        if commit and not self.session.get_transaction():
-            self.session.commit()
+
+        if not self.session:
+            # 没有包在上层session里
+            session = Session(self.engine)
+            session.add(self)
+            session.commit()
+        else:
+            # 有上下文session
+            # 只加不提交
+            self.session.add(self)
 
     def update(self, **kwargs):
         """

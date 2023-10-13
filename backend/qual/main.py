@@ -10,3 +10,8 @@ from fastapi import FastAPI
 
 app = FastAPI(debug=settings.DEBUG)
 xyapi.init(app, qual)
+
+
+@app.get("/test")
+def test():
+    return "shit"
